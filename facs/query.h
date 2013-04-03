@@ -1,7 +1,7 @@
-#ifndef _BIGQUERY
-#define _BIGQUERY
+#ifndef _QUERY
+#define _QUERY
 
-#include "check.h"
+#include "tool.h"
 #include "bloom.h"
 #include <zlib.h>
 extern char *bac_2_n (char *filename);

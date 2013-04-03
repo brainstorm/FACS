@@ -10,9 +10,8 @@
 #include <sys/types.h>
 #include "tool.h"
 #include "bloom.h"
-#include "check.h"
 #include "file_dir.h"
-#include "big_query.h"
+#include "query.h"
 
 //@lh3 FastQ reading magic
 #include "readfq/kseq.h"
@@ -136,7 +135,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   while (kseq_read(seq) >= 0) {
     File_head->reads_num++;
 
-    read = query_read(seq->seq.s, seq->seq.l, "n", bl, tole_rate, File_head);
+    read = query_read(seq->seq.s, seq->seq.l, 'n', bl, tole_rate, File_head);
     if(read){
     	File_head->reads_contam++;
     }
