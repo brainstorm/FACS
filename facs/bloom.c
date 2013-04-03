@@ -525,38 +525,6 @@ mmaping (char *source)
   return sm;
 }
 
-char *
-large_load (char *fifoname)
-{
-  int x = 0;
-  char ch;
-  FILE *fd;
-
-  printf ("fifoname->%s\n", fifoname);
-#ifdef __APPLE__
-  fd = fopen (fifoname, "r");
-#else
-  fd = fopen64 (fifoname, "r");
-#endif
-
-  char *data = (char *) malloc ((TWOG / 2 + 1) * sizeof (char));
-
-  data[TWOG / 2] = '\0';
-
-  while ((ch = fgetc (fd)) != EOF)
-    {
-      data[x] = ch;
-      x++;
-    }
-
-#ifdef DEBUG
-  printf ("data length->%lld\n", (long long int) strlen (data));
-#endif
-
-  fclose (fd);
-  return data;
-}
-
 BIGCAST
 get_size (char *filename)
 {

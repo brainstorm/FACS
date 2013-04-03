@@ -18,38 +18,8 @@
 #include "bloom.h"
 #include "file_dir.h"
 
-
-void isodate(char* buf) {
-    /* Borrowed from: https://raw.github.com/jordansissel/experiments/bd58235b99f608472212a5933b52fca9cf1cac8d/c/time/iso8601.c */
-    struct timeval tv;
-    struct tm tm;
-    char timestamp[] = "YYYY-MM-ddTHH:mm:ss.SSS+0000";
-
-    /* Get the current time at high precision; could also use clock_gettime() for
-     * even higher precision times if we want it. */
-
-    gettimeofday(&tv, NULL);
-
-    /* convert to time to 'struct tm' for use with strftime */
-
-    localtime_r(&tv.tv_sec, &tm);
-
-    /* format the time */
-
-    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S.000%z", &tm);
-
-    /* but, since strftime() can't subsecond precision, we have to hack it
-     * in manually. '20' is the string offset of the subsecond value in our
-     * timestamp string. Also, because sprintf always writes a null, we have to
-     * write the subsecond value as well as the rest of the string already there.
-     */
-
-    sprintf(timestamp + 20, "%03d%s", tv.tv_usec / 1000, timestamp + 23);
-    sprintf(buf, "%s", timestamp);
-}
-
 int
-fastq_read_check (char *begin, int length, char model, bloom * bl, 
+query_read(char *begin, int length, char model, bloom * bl, 
                   float tole_rate, F_set * File_head)
 {
   char *p = begin;
@@ -62,61 +32,48 @@ fastq_read_check (char *begin, int length, char model, bloom * bl,
       if (signal == 1)
 	break;
 
-      if (distance >= bl->k_mer)
-	{
+      if (distance >= bl->k_mer) {
 	  memcpy (key, p, sizeof (char) * bl->k_mer);	//need to be tested
 	  key[bl->k_mer] = '\0';
 	  p += bl->k_mer;
 	  previous = p;
 	  distance -= bl->k_mer;
-	}
-
-      else
-	{
+      } else {
 	  memcpy (key, previous + distance, sizeof (char) * bl->k_mer);
 	  p += (bl->k_mer - distance);
 	  signal = 1;
-	}
+      }
 
       if (model == 'r')
 	rev_trans (key);
 
-      if (bloom_check (bl, key))
-	{
+      if (bloom_check (bl, key)) {
 	  result =
 	    fastq_full_check (bl, begin, length, model, tole_rate, File_head);
 	  if (result > 0)
 	    return result;
 	  else if (model == 'n')
 	    break;
-	}
-
+      }
     }				//outside while
+
   if (model == 'r')
     return 0;
   else
-    return fastq_read_check (begin, length, 'r', bl, tole_rate, File_head);
+    return query_read(begin, length, 'r', bl, tole_rate, File_head);
 }
 
 /*-------------------------------------*/
 int
 fastq_full_check (bloom * bl, char *p, int distance, char model, float tole_rate, F_set * File_head)
 {
-
-  //printf ("fastq full check...\n");
-
   int length = distance;
-
   int count = 0, match_s = 0, mark = 1, match_time = 0;
-
   float result;
-
   char *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
-
   short prev = 0, conse = 0;
 
-  while (distance >= bl->k_mer)
-    {
+  while (distance >= bl->k_mer) {
       memcpy (key, p, sizeof (char) * bl->k_mer);
       key[bl->k_mer] = '\0';
       p += 1;
@@ -124,48 +81,46 @@ fastq_full_check (bloom * bl, char *p, int distance, char model, float tole_rate
       if (model == 'r')
 	rev_trans (key);
 
-      if (count >= bl->k_mer)
-	{
+      if (count >= bl->k_mer) {
 	  mark = 1;
 	  count = 0;
-	}
-      if (strlen (key) == bl->k_mer)
-	{
-	  if (bloom_check (bl, key))
-	    {
+      }
+
+      if (strlen (key) == bl->k_mer) {
+	  if (bloom_check (bl, key)) {
 	      match_time++;
 	      if (prev == 1)
 		conse++;
-	      else
-		{
+	      else {
 		  conse += bl->k_mer;
 		  prev = 1;
-		}
-	      if (mark == 1)
-		{
+	      }
+
+	      if (mark == 1) {
 		  match_s += (bl->k_mer - 1);
 		  mark = 0;
-		}
-	      else
-		match_s++;
+	      } else
+	      	  match_s++;
 	    }
 
-	  else
-	    {
+	  else {
 	      prev = 0;
-	      //printf("unhit--->\n");
-	    }
+	  }
+	  
 	  count++;
 	}			//outside if
       distance--;
     }				// end while
+
   free (key);
-  result = (float) (match_time * bl->k_mer + conse) / (float) (length * bl->k_mer - 2 * bl->dx + length - bl->k_mer + 1);
-  //result = (float) match_s / (float) length;
+  result = (float) (match_time * bl->k_mer + conse) /
+  	   (float) (length * bl->k_mer - 2 * bl->dx + length - bl->k_mer + 1);
+
 #pragma omp atomic
   File_head->hits += match_time;
 #pragma omp atomic
   File_head->all_k += (length - bl->k_mer);
+
   if (result >= tole_rate)
     return match_s;
   else
@@ -257,34 +212,25 @@ int
 fasta_full_check (bloom * bl, char *begin, char *next, char model, float tole_rate, F_set * File_head)
 {
   int match_s = 0, count = 0, mark = 1;
-
   int n = 0, m = 0, count_enter = 0, match_time = 0;
-
   short previous = 0, conse = 0;
-
   float result;
 
   char *key = (char *) malloc ((bl->k_mer + 1) * sizeof (char));
-
   begin = strchr (begin + 1, '\n') + 1;
-
   char *p = begin;
 
-  while (p != next)
-    {
+  while (p != next) {
       if (*p == '\n')
 	count_enter++;
       p++;
-    }
+  }
 
   p = begin;
 
-  while (*p != '>' && *p != '\0')
-    {
-      while (n < bl->k_mer)
-	{
-	  if (p[m] == '>' || p[m] == '\0')
-	    {
+  while (*p != '>' && *p != '\0') {
+      while (n < bl->k_mer) {
+	  if (p[m] == '>' || p[m] == '\0') {
 	      m--;
 	      break;
 	    }
@@ -340,13 +286,6 @@ fasta_full_check (bloom * bl, char *begin, char *next, char model, float tole_ra
       n = 0;
       m = 0;
     }				// end of while
-  //result = (float) match_s / (float) (next - begin - count_enter);
-  //result = (float) match_time*(bl->k_mer)/(float)((next-begin-count_enter-bl->k_mer+2)*(bl->k_mer)+2*dx_add(bl->k_mer));
-  //result = (float) ((match_time+conse)*(bl->k_mer))/(float)((next-begin-count_enter-bl->k_mer+2+conse)*(bl->k_mer)+2*dx_add(bl->k_mer));
-  //result = (float) ((match_time)*(bl->k_mer))/(float)((next-begin-count_enter-bl->k_mer+2)*(bl->k_mer)+2*dx_add(bl->k_mer));
-  //result = (float)(match_time*bl->k_mer+conse)/(float)((next-begin-count_enter-bl->k_mer+2)*bl->k_mer+conse+2*dx_add(bl->k_mer));
-  //printf ("result1->%f\n",result);
-  //result = (float)(match_time*bl->k_mer)/(float)((next-begin-count_enter)*bl->k_mer-2*dx_add(bl->k_mer-1));
   result = (float) (match_time * bl->k_mer + conse) / (float) ((next - begin - count_enter) * bl->k_mer - 2 * bl->dx + (next - begin - count_enter) - bl->k_mer + 1);
 
 #pragma omp atomic
@@ -436,32 +375,6 @@ get_parainfo (char *full, Queue * head)
   return type;
 }
 
-/*-------------------------------------*/
-char *
-jump (char *target, int type, float sampling_rate)
-{
-  //printf("here\n");
-  float seed = rand () % 10;
-
-  if (seed >= (float) sampling_rate * 10)
-    {
-
-      char *point;
-
-      if (type == 1)
-	point = strchr (target + 1, '>');	//point to >
-      else
-	{
-	  point = strstr (target + 1, "\n+") + 1;	//point to +
-	  point = strchr (point, '\n') + 1;	//point to quality line
-	  point = strchr (point, '\n') + 1;	//point to next read starting
-	}
-      if (point)
-	target = point;
-    }
-  return target;
-}
-
 char *
 fastq_relocate (char *data, int offset, int length)
 {
@@ -502,4 +415,29 @@ fq_read_length (char *data)
   while (*data != '\n')
     data--;
   return origin - data;
+}
+
+void isodate(char* buf) {
+    /* Borrowed from: https://raw.github.com/jordansissel/experiments/bd58235/c/time/iso8601.c */
+    struct timeval tv;
+    struct tm tm;
+    char timestamp[] = "YYYY-MM-ddTHH:mm:ss.SSS+0000";
+
+    /* Get the current time at high precision; could also use clock_gettime() for
+     * even higher precision times if we want it. */
+    gettimeofday(&tv, NULL);
+
+    /* convert to time to 'struct tm' for use with strftime */
+    localtime_r(&tv.tv_sec, &tm);
+
+    /* format the time */
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S.000%z", &tm);
+
+    /* but, since strftime() can't subsecond precision, we have to hack it
+     * in manually. '20' is the string offset of the subsecond value in our
+     * timestamp string. Also, because sprintf always writes a null, we have to
+     * write the subsecond value as well as the rest of the string already there.
+     */
+    sprintf(timestamp + 20, "%03d%s", tv.tv_usec / 1000, timestamp + 23);
+    sprintf(buf, "%s", timestamp);
 }

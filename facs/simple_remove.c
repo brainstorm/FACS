@@ -200,7 +200,7 @@ fastq_process_m (bloom * bl, Queue * info, Queue * tail, float tole_rate, F_set 
       if (!temp_end)
 	temp_end = strchr (p, '\0');
       int result =
-	fastq_read_check (p, strchr (p, '\n') - p, 'n', bl, tole_rate, File_head);
+	query_read(p, strchr (p, '\n') - p, 'n', bl, tole_rate, File_head);
 
       if (result == 0)
 	{

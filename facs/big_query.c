@@ -14,6 +14,10 @@
 #include "file_dir.h"
 #include "big_query.h"
 
+//@lh3 FastQ reading magic
+#include "readfq/kseq.h"
+KSEQ_INIT(gzFile, gzread);
+
 #ifndef __clang__
   // openMP not yet ported to clang: http://www.phoronix.com/scan.php?page=news_item&px=MTI2MjU
   #include <omp.h>
@@ -26,13 +30,10 @@ query_usage (void)
   fprintf (stderr, "Options:\n");
   fprintf (stderr, "\t-r reference Bloom filter to query against\n");
   fprintf (stderr, "\t-q FASTA/FASTQ file containing the query\n");
-  fprintf (stderr, "\t-l input list containing all Bloom filters,\
-           one per line\n");
+  fprintf (stderr, "\t-l input list containing all Bloom filters, one per line\n");
   fprintf (stderr, "\t-t threshold value\n");
-  fprintf (stderr, "\t-f report output format, valid values are:\
-           'json' and 'tsv'\n");
-  fprintf (stderr, "\t-s sampling rate, default is 1 so it reads the whole\
-           query file\n");
+  fprintf (stderr, "\t-f report output format, valid values are: 'json' and 'tsv'\n");
+  fprintf (stderr, "\t-s sampling rate, default is 1 so it reads the whole query file\n");
   fprintf (stderr, "\n");
   return 1;
 }
@@ -103,111 +104,57 @@ int
 query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
        char *list, char *target_path, char *report_fmt)
 {
-  gzFile zip = NULL;
-  int type = 0, normal = 0;
-  BIGCAST offset = 0;
-  char *detail = (char *) calloc ((ONE * ONE * ONE), sizeof (char));
-  char *position = NULL;
+  /* TODO: Implement sampling
+   *       OpenMP it
+   *       MPI it
+   */
+  gzFile fp;
+  kseq_t *seq;
 
-  bloom *bl_2 = NEW (bloom);
+  bloom *bl = NEW (bloom);
   F_set *File_head = make_list (bloom_filter, list);
+  int read = 0;
 
   File_head->reads_num = 0;
   File_head->reads_contam = 0;
   File_head->hits = 0;
   File_head->filename = bloom_filter;
-  load_bloom (File_head->filename, bl_2);	//load a bloom filter
-  if (tole_rate == 0)
-    tole_rate = mco_suggestion (bl_2->k_mer);
+ 
+  load_bloom(File_head->filename, bl);
 
-  if ((get_size (query) < 2 * ONEG) && !strstr (query, ".gz")
-      && !strstr (query, ".tar"))
-        normal = 1;
-  else {
-      if ((zip = gzopen (query, "rb")) < 0) {
-          perror ("query open error...\n");
-          exit (-1);
-	  }
-      normal = 0;
+  if(!query) {
+  	fp = gzdopen(fileno(stdin), "r");
+  } else {
+  	fp = gzdopen(open(query, O_RDONLY), "r");
   }
 
-  if (strstr (query, ".fastq") != NULL || strstr (query, ".fq") != NULL)
-    type = 2;
-  else
-    type = 1;
+  seq = kseq_init(fp);
+  
+  if (tole_rate == 0)
+    tole_rate = mco_suggestion (bl->k_mer);
 
-  if (normal == 0)
-    position = (char *) calloc ((ONEG + 1), sizeof (char));
-  while (offset != -1)
-    {
-      if (normal == 1)
-	{
-	  position = mmaping (query);
-	  offset = -1;
-	}
-      else
-	{
-	  offset = CHUNKer (zip, offset, ONEG, position, type);
-	}
-      Queue *head = NEW (Queue);
-      head->location = NULL;
-      Queue *tail = NEW (Queue);
-      head->next = tail;
-      Queue *head2 = head;
-      get_parainfo (position, head);
+  while (kseq_read(seq) >= 0) {
+    File_head->reads_num++;
 
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	{
-	  while (head != tail)
-	    {
-#pragma omp task firstprivate(head)
-	      {
-		if (head->location != NULL)
-		  {
-		    if (type == 1) {
-			    fasta_process (bl_2, head, tail, File_head,
-				               sampling_rate, tole_rate);
-		    } else {
-			    fastq_process (bl_2, head, tail, File_head, 
-                               sampling_rate, tole_rate);
-		    }
-		  }
-	      }
-	      head = head->next;
-	    }			// End of firstprivate
-	}			// End of single - no implied barrier (nowait)
-      }				// End of parallel region - implied barrier
+    read = query_read(seq->seq.s, seq->seq.l, "n", bl, tole_rate, File_head);
+    if(read){
+    	File_head->reads_contam++;
+    }
+  }
 
-    if (position != NULL && normal == 0) {
-      memset (position, 0, strlen (position));
-	} else if (normal == 1)	{
-	  munmap (position, strlen (position));
-	} else {
-	  perror ("Cannot memset, wrong position on fastq file\n");
-	  exit (-1);
-	}
+  printf("READS: %lld\nREADS_C: %lld\n", File_head->reads_num,
+  		  			 File_head->reads_contam);
 
-      clean_list (head2, tail);
-
-    }				//end while
-  if (normal == 0)
-    free (position);
-
-  report(detail, File_head->filename, File_head, query, report_fmt, target_path);
-
-  if (normal == 0)
-    gzclose (zip);
-
-  bloom_destroy (bl_2);
-
+  kseq_destroy(seq);
+  gzclose(fp);
+  bloom_destroy(bl);
   return 0;
 }
 
 char *
 strrstr (char *s, char *str)
 {
+/* Matches string in reverse */
   char *p;
   int len = strlen (s);
   for (p = s + len - 1; p >= s; p--)
@@ -230,95 +177,6 @@ clean_list (Queue * head, Queue * tail)
       head = element;
     }
   free (tail);
-}
-
-
-BIGCAST
-CHUNKer (gzFile zip, BIGCAST offset, int chunk, char *data, int type)
-{
-  char c, v;
-  char *pos = NULL;
-  int length = 0;
-
-  if (type == 2)
-    v = '@';
-  else
-    v = '>';
-
-  if (offset == 0)
-    while (offset < 10 * ONE)
-      {
-	c = gzgetc (zip);
-	if (c == v)
-	  break;
-	offset++;
-      }
-
-  gzseek (zip, offset, SEEK_SET);
-  gzread (zip, data, chunk);
-
-  if (data != NULL)
-    length = strlen (data);
-
-  if (length >= chunk)
-    {
-      if (type == 2)
-	{
-	  pos = strrstr (data, "\n+");
-	  pos = bac_2_n (pos - 1);
-	}
-      else
-	{
-	  pos = strrchr (data, '>') - 1;
-	}
-    }
-
-  if (pos)
-    {
-      offset += (pos - data);
-      memset (pos, 0, strlen (pos));
-    }
-
-  if (length < chunk)
-    offset = -1;
-
-  return offset;
-}
-
-BIGCAST
-CHUNKgz (gzFile zip, BIGCAST offset, int chunk, char *position, char *extra,
-	 int type)
-{
-  memset (position, 0, chunk);
-  char c, *position2 = position;
-  char *x;
-  int num = 0;
-  if (offset == 0)
-    while (offset < 10 * ONE)
-      {
-	c = gzgetc (zip);
-	if ((c == '@' && type == 2) && (c == '>' && type == 1))
-	  break;
-	offset++;
-      }
-  if (extra != NULL)
-    {
-      memcpy (position, extra, strlen (extra));
-      position += strlen (extra);
-    }
-  free (extra);
-  while (((c = gzgetc (zip)) != EOF) && (num < chunk))
-    {
-      *position = c;
-      position++;
-      num++;
-    }
-  x = strrstr (position2, "\n@");
-  extra = (char *) malloc ((position - x + 1) * sizeof (char));
-  memcpy (x, extra, position - x + 1);
-  offset += (position - x + 1);
-
-  return offset;
 }
 
 char *

@@ -194,7 +194,7 @@ fastq_process_ml (F_set * File_head, bloom * bl, Queue * info, Queue * tail,
 	temp_end = strchr (p, '\0');
 
       result =
-	fastq_read_check (p, strchr (p, '\n') - p, 'n', bl, tole_rate,
+	query_read(p, strchr (p, '\n') - p, 'n', bl, tole_rate,
 			  File_head);
 
       if (result == 0)
