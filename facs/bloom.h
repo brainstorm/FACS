@@ -129,7 +129,6 @@ extern int save_bloom (char *filename, bloom * bl, char *prefix,
 extern int load_bloom (char *filename, bloom * bl);
 extern void rev_trans (char *s);
 
-extern char *large_load (char *fifoname);
 extern char *mmaping (char *source);
 extern char *prefix_make (char *filename, char *prefix, char *target);
 #endif

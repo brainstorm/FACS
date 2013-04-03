@@ -9,7 +9,7 @@
 #include <string.h>
 
 #ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION "2.0"
+#define PACKAGE_VERSION "2.1"
 #endif
 
 static int
@@ -18,7 +18,7 @@ usage (void)
   fprintf (stderr, "\n");
   fprintf (stderr, "Program: facs - Sequence analysis using Bloom filters\n");
   fprintf (stderr, "Version: %s\n", PACKAGE_VERSION);
-  fprintf (stderr, "Contact: Enze Liu <enze.liu@scilifelab.se>\n\n");
+  fprintf (stderr, "Contact: Enze Liu <enze.liu@scilifelab.se>, Roman Valls Guimera <roman@scilifelab.se>\n\n");
   fprintf (stderr, "Usage:   facs <command> [options]\n\n");
   fprintf (stderr,
 	   "Command: build         build a Bloom filter from a FASTQ/FASTA reference file\n");

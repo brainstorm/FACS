@@ -141,8 +141,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
     }
   }
 
-  printf("READS: %lld\nREADS_C: %lld\n", File_head->reads_num,
-  		  			 File_head->reads_contam);
+  report(File_head, query, report_fmt, target_path);
 
   kseq_destroy(seq);
   gzclose(fp);
