@@ -50,7 +50,7 @@ Usage
 ------
 
 Facs uses a similar commandline structure to the one found in the popular <a href="https://github.com/lh3/bwa">bwa</a>.
-There are three main commands: build, query and remove. Each of them might have slightly different flags but should
+There are three main commands: `build`, `query` and `remove`. Each of them might have slightly different flags but should
 behave similarly.
 
 ```
@@ -80,10 +80,15 @@ $ ./facs query -r ecoli.bloom -q contaminated_sample.fastq.gz -f "json"
 ```
 
 Note that both plaintext fastq files and gzip-compressed files are supported transparently
-to the user.
+to the user. A single sequence can be passed as well, if prefixed with the `seq=` keyword
+as follows:
 
-Which would return some metrics, in json format, indicating how many reads might
-be contaminated with ecoli in that particular sample:
+```
+$ ./facs query -r "seq=GATTACA" -q contaminated_sample.fastq.gz -f "json"
+```
+
+When finished, some metrics will be returned to `stdout`, in json format by default, indicating
+how many reads might be contaminated with ecoli in that particular sample:
 
 ```
 {
@@ -134,6 +139,7 @@ Python 2.6.6 (r266:84292, Jun 18 2012, 09:57:52)
 Type "help", "copyright", "credits" or "license" for more information.
 >>> import facs
 >>> facs.build("ecoli.fasta", "ecoli.bloom")
+>>> facs.query("seq=GATTACA", "ecoli.bloom")
 >>> facs.query("contaminated_sample.fastq.gz", "ecoli.bloom")
 >>> facs.remove("contaminated_sample.fastq", "ecoli.bloom")
 ```
