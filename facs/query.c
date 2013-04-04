@@ -13,7 +13,7 @@
 #include "file_dir.h"
 #include "query.h"
 
-//@lh3 FastQ reading magic
+//@lh3 FASTA/FASTQ reading magic
 #include "readfq/kseq.h"
 KSEQ_INIT(gzFile, gzread);
 

@@ -5,15 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-/*-------------------------------------*/
-//for file mapping in Linux
-#include<fcntl.h>
-#include<unistd.h>
-#include<sys/stat.h>
-#include<sys/time.h>
-#include<sys/mman.h>
-#include<sys/types.h>
-/*-------------------------------------*/
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+
 #include "build.h"
 #include "bloom.h"
 #include "file_dir.h"
@@ -280,7 +278,6 @@ fasta_data (bloom * bl_2, char *data)
   return p;
 }
 
-/*-------------------------------------*/
 void
 ref_add (bloom * bl, char *position)
 {
