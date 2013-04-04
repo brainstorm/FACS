@@ -5,7 +5,7 @@ UNAME := $(shell uname)
 ifneq ($(UNAME), Darwin)
 LIBS=-lm -lz -fopenmp 
 else
-CFLAGS=-Wno-unknown-pragmas -Wno-unused-value
+CFLAGS=-Wno-unknown-pragmas -Wno-unused-value -arch x86_64
 LIBS=-lz
 endif
 

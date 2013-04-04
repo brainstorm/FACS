@@ -18,8 +18,8 @@
 KSEQ_INIT(gzFile, gzread);
 
 #ifndef __clang__
-  // openMP not yet ported to clang: http://www.phoronix.com/scan.php?page=news_item&px=MTI2MjU
-  #include <omp.h>
+// openMP not yet ported to clang: http://www.phoronix.com/scan.php?page=news_item&px=MTI2MjU
+#include <omp.h>
 #endif
 
 static int
@@ -43,7 +43,6 @@ bq_main (int argc, char **argv)
   if (argc < 3)
     return query_usage ();
 
-/*-------defaults for bloom filter building-------*/
   int opt;
   double tole_rate = 0;
   double sampling_rate = 1;
@@ -103,16 +102,19 @@ int
 query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
        char *list, char *target_path, char *report_fmt)
 {
-  /* TODO: Implement sampling
+  /* 
+   * TODO: Implement sampling
    *       OpenMP it
-   *       MPI it
+   *       Buffering/Chunking
    */
-  gzFile fp;
-  kseq_t *seq;
 
+  gzFile fp;
+  kseq_t *seq = NULL;
+
+  int read = 0;
+  char* read_qry = NULL;
   bloom *bl = NEW (bloom);
   F_set *File_head = make_list (bloom_filter, list);
-  int read = 0;
 
   File_head->reads_num = 0;
   File_head->reads_contam = 0;
@@ -121,11 +123,22 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
  
   load_bloom(File_head->filename, bl);
 
+  // read stdin or input file
   if(!query) {
   	fp = gzdopen(fileno(stdin), "r");
-  } else {
+  } else if (strstr(query, "seq=")) {
+  	// We just query 1 read
+  	File_head->reads_num++;
+  	// read query file vs inline "-r seq=GATTACA" argument
+        read_qry = substr(query, 4, strlen(query)-4);
+        printf("%s,%d\n", read_qry, read);
+    	read = query_read(read_qry, strlen(read_qry), 'n', bl, tole_rate, File_head);
+    	if(read)
+    		File_head->reads_contam++;
+  	report(File_head, read_qry, report_fmt, target_path);
+  	return 0;
+  } else
   	fp = gzdopen(open(query, O_RDONLY), "r");
-  }
 
   seq = kseq_init(fp);
   
@@ -147,44 +160,4 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   gzclose(fp);
   bloom_destroy(bl);
   return 0;
-}
-
-char *
-strrstr (char *s, char *str)
-{
-/* Matches string in reverse */
-  char *p;
-  int len = strlen (s);
-  for (p = s + len - 1; p >= s; p--)
-    {
-      if ((*p == *str) && (memcmp (p, str, strlen (str)) == 0))
-	return p;
-    }
-  return NULL;
-}
-
-void
-clean_list (Queue * head, Queue * tail)
-{
-  Queue *element;
-  while (head != tail)
-    {
-      element = head->next;
-      memset (head, 0, sizeof (Queue));
-      free (head);
-      head = element;
-    }
-  free (tail);
-}
-
-char *
-bac_2_n (char *filename)
-{
-  while (*filename != '\n')
-    filename--;
-  filename--;			//move from \n
-  while (*filename != '\n')
-    filename--;
-  filename++;
-  return filename;
 }

@@ -1,7 +1,9 @@
 #ifndef _TOOL
 #define _TOOL
 
+#include <stdlib.h>
 #include "bloom.h"
+
 int fq_read_length (char *data);
 extern int dx_add (int k_mer);
 extern int get_parainfo (char *full, Queue *head);
@@ -13,4 +15,6 @@ extern int query_read(char *begin, int length, char model, bloom * bl, float tol
 extern int fasta_read_check (char *begin, char *next, char model, bloom * bl, float tole_rate, F_set *File_head);
 void isodate(char* buf);
 void report(F_set * File_head, char* query, char* fmt, char* prefix);
+char* substr(const char* str, size_t begin, size_t len);
+
 #endif

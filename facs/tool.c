@@ -21,15 +21,14 @@
 
 int
 query_read(char *begin, int length, char model, bloom * bl, 
-                  float tole_rate, F_set * File_head)
+           float tole_rate, F_set * File_head)
 {
   char *p = begin;
   int distance = length;
   int signal = 0, result = 0;
-  char *previous, *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
+  char *previous, *key = (char *) malloc (bl->k_mer * sizeof(char)+1);
 
-  while (distance > bl->k_mer)
-    {
+  while (distance > bl->k_mer) {
       if (signal == 1)
 	break;
 
@@ -56,7 +55,7 @@ query_read(char *begin, int length, char model, bloom * bl,
 	  else if (model == 'n')
 	    break;
       }
-    }				//outside while
+  }				//outside while
 
   if (model == 'r')
     return 0;
@@ -64,7 +63,6 @@ query_read(char *begin, int length, char model, bloom * bl,
     return query_read(begin, length, 'r', bl, tole_rate, File_head);
 }
 
-/*-------------------------------------*/
 int
 fastq_full_check (bloom * bl, char *p, int distance, char model, float tole_rate, F_set * File_head)
 {
@@ -128,7 +126,6 @@ fastq_full_check (bloom * bl, char *p, int distance, char model, float tole_rate
     return 0;
 }
 
-/*-------------------------------------*/
 int
 fasta_read_check (char *begin, char *next, char model, bloom * bl, float tole_rate, F_set * File_head)
 {
@@ -476,3 +473,11 @@ contaminated_reads\tcontamination_rate\n");
               File_head->reads_contam, contamination_rate);
   }
 }
+
+char* 
+substr(const char* str, size_t begin, size_t len) 
+{
+	if (str == 0 || strlen(str) == 0 || strlen(str) < begin || strlen(str) < (begin+len))
+		return 0; 
+	return strndup(str + begin, len); 
+} 
