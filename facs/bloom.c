@@ -10,7 +10,6 @@
 #include "hashes.h"
 #include "file_dir.h"
 
-/*---------------------------*/
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
