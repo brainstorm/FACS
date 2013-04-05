@@ -49,7 +49,7 @@ query_read(char *begin, int length, char model, bloom * bl,
 
       if (bloom_check (bl, key)) {
 	  result =
-	    fastq_full_check (bl, begin, length, model, tole_rate, File_head);
+	    read_full_check (bl, begin, length, model, tole_rate, File_head);
 	  if (result > 0)
 	    return result;
 	  else if (model == 'n')
@@ -64,7 +64,7 @@ query_read(char *begin, int length, char model, bloom * bl,
 }
 
 int
-fastq_full_check (bloom * bl, char *p, int distance, char model, float tole_rate, F_set * File_head)
+read_full_check (bloom * bl, char *p, int distance, char model, float tole_rate, F_set * File_head)
 {
   int length = distance;
   int count = 0, match_s = 0, mark = 1, match_time = 0;

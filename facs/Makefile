@@ -41,4 +41,4 @@ ${PROG}:lib${PROG}.a $(AOBJS) main.o
 lib${PROG}.a:$(LOBJS)
 		$(AR) -csru $@ $(LOBJS)
 
-main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h remove.h remove_l.h
+main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h
