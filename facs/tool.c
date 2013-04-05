@@ -24,22 +24,23 @@ query_read(char *begin, int length, char model, bloom * bl,
            float tole_rate, F_set * File_head)
 {
   char *p = begin;
+  int len = length;
   int signal = 0, result = 0;
   char *previous, *key = (char *) malloc (bl->k_mer * sizeof(char)+1);
 
-  while (length > bl->k_mer) {
+  while (len > bl->k_mer) {
       if (signal == 1)
 	break;
 
-      if (length >= bl->k_mer) {
+      if (len >= bl->k_mer) {
 	  memcpy (key, p, sizeof (char) * bl->k_mer);	//need to be tested
 	  key[bl->k_mer] = '\0';
 	  p += bl->k_mer;
 	  previous = p;
-	  length -= bl->k_mer;
+	  len -= bl->k_mer;
       } else {
-	  memcpy (key, previous + length, sizeof (char) * bl->k_mer);
-	  p += (bl->k_mer - length);
+	  memcpy (key, previous + len, sizeof (char) * bl->k_mer);
+	  p += (bl->k_mer - len);
 	  signal = 1;
       }
 
@@ -47,8 +48,7 @@ query_read(char *begin, int length, char model, bloom * bl,
 	rev_trans (key);
 
       if (bloom_check (bl, key)) {
-	  result =
-	    read_full_check (bl, begin, length, model, tole_rate, File_head);
+	  result = read_full_check (bl, begin, length, model, tole_rate, File_head);
 	  if (result > 0)
 	    return result;
 	  else if (model == 'n')
@@ -65,9 +65,9 @@ query_read(char *begin, int length, char model, bloom * bl,
 int
 read_full_check (bloom * bl, char *begin, int length, char model, float tole_rate, F_set * File_head)
 {
-  int count = 0, match_s = 0, mark = 1, match_time = 0;
   float result;
   int len = length;
+  int count = 0, match_s = 0, mark = 1, match_time = 0;
   char *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
   short prev = 0, conse = 0;
 
