@@ -1,6 +1,5 @@
 #include "build.h"
-#include "remove.h"
-#include "remove_l.h"
+//#include "remove.h"
 #include "query.h"
 
 #include <stdio.h>
@@ -24,10 +23,10 @@ usage (void)
 	   "Command: build         build a Bloom filter from a FASTQ/FASTA reference file\n");
   fprintf (stderr,
 	   "         query         query a Bloom filter given a FASTQ/FASTA file. Large files and compressed files supported\n");
-  fprintf (stderr,
-	   "         remove        remove (contamination) sequences from FASTQ/FASTA file\n");
-  fprintf (stderr,
-	   "         classify      classify reads to the most likely reference genomes\n");
+//  fprintf (stderr,
+//	   "         remove        remove (contamination) sequences from FASTQ/FASTA file\n");
+//  fprintf (stderr,
+//	   "         classify      classify reads to the most likely reference genomes\n");
   fprintf (stderr, "\n");
   return 1;
 }
@@ -45,10 +44,10 @@ main (int argc, char **argv)
     ret = build_main (argc-1, argv+1);
   else if (strcmp (argv[1], "query") == 0)
     ret = bq_main (argc-1, argv+1);
-  else if (strcmp (argv[1], "remove") == 0)
-    ret = remove_main (argc-1, argv+1);
-  else if (strcmp (argv[1], "classify") == 0)
-    ret = remove_l_main (argc-1, argv+1);
+//  else if (strcmp (argv[1], "remove") == 0)
+//    ret = remove_main (argc-1, argv+1);
+//  else if (strcmp (argv[1], "classify") == 0)
+//    ret = remove_l_main (argc-1, argv+1);
   else
     usage();
   return ret;

@@ -12,8 +12,8 @@ endif
 .PHONY: tests clean valgrind
 .SUFFIXES:.c .o
 PROG=facs
-LOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o simple_remove.o simple_remove_l.o prob.o
-AOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o simple_remove.o simple_remove_l.o prob.o
+LOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o prob.o
+AOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o prob.o
 
 all:$(PROG)
 
@@ -22,15 +22,6 @@ tests: python
 
 valgrind: python
 	valgrind --tool=memcheck --suppressions=../tests/utils/valgrind-python.supp nosetests -v -s ../tests/test_basic.py
-
-mpi:
-	@echo Make sure you have MPI support on your cluster hint: module load openmpi
-	#mpicc -c *.c ${CFLAGS}
-	#mpicc -c mpi_decon.c -O3 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILE 
-	#mpicc -o mpi_decon mpi_decon.o bloom.o suggestions.o lookup8.o  -lm ${CFLAGS}
-	#mpicc -o mpi_bloom mpi_bloom.o bloom.o suggestions.o lookup8.o file_dir.o -lm ${CFLAGS}
-	#mpicc -o mpi_bloom_l mpi_bloom_l.o bloom.o suggestions.o lookup8.o file_dir.o -lm ${CFLAGS}
-	#mpirun -np 1 ./mpi_bloom_l -l tzcoolman  -q test.fna
 
 python:
 	rm -rf build/ ${PROG}.so && python setup.py build_ext --inplace && python setup.py develop
