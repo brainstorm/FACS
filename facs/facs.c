@@ -4,7 +4,7 @@
 #include "tool.h"
 #include "build.h"
 #include "query.h"
-#include "remove.h"
+//#include "remove.h"
 
 static char module_docstring[] =
 "This module provides an interface for building and querying FACS bloom \
@@ -87,7 +87,8 @@ facs_bloom_remove(PyObject * self, PyObject * args)
       (args, "ss|ssd", &src, &ref, &list, &prefix, &tole_rate))
     return NULL;
 
-  ret = remove_reads(src, ref, NULL, NULL, tole_rate);
+  //TODO: Reimplement properly
+  //ret = remove_reads(src, ref, NULL, NULL, tole_rate);
 
   return Py_BuildValue ("i", ret);
 }
