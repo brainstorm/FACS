@@ -67,11 +67,12 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 {
   int count = 0, match_s = 0, mark = 1, match_time = 0;
   float result;
+  int len = length;
   char *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
   short prev = 0, conse = 0;
 
   while (length >= bl->k_mer) {
-      key = begin;
+      memcpy (key, begin, sizeof (char) * bl->k_mer);
       key[bl->k_mer] = '\0';
       begin += 1;
 
@@ -109,13 +110,15 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
       length--;
     }				// end while
 
+  free(key);
+  
   result = (float) (match_time * bl->k_mer + conse) /
-  	   (float) (length * bl->k_mer - 2 * bl->dx + length - bl->k_mer + 1);
+  	   (float) (len * bl->k_mer - 2 * bl->dx + len - bl->k_mer + 1);
 
 #pragma omp atomic
   File_head->hits += match_time;
 #pragma omp atomic
-  File_head->all_k += (length - bl->k_mer);
+  File_head->all_k += (len - bl->k_mer);
 
   if (result >= tole_rate)
     return match_s;
