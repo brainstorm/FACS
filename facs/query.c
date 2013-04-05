@@ -27,7 +27,7 @@ query_usage (void)
 {
   fprintf (stderr, "\nUsage: ./facs query [options]\n");
   fprintf (stderr, "Options:\n");
-  fprintf (stderr, "\t-r reference Bloom filter to query against\n");
+  fprintf (stderr, "\t-r reference Bloom filter to query against (file) or inline (seq=GATTACA) \n");
   fprintf (stderr, "\t-q FASTA/FASTQ file containing the query\n");
   fprintf (stderr, "\t-l input list containing all Bloom filters, one per line\n");
   fprintf (stderr, "\t-t threshold value\n");
@@ -85,15 +85,6 @@ bq_main (int argc, char **argv)
 	}
   }
 
-  if (!target_path && !source) {
-      fprintf (stderr, "\nPlease, at least specify a bloom filter (-r) and a query file (-q)\n");
-      exit (-1);
-  }
-
-  if (target_path == NULL) {
-      target_path = argv[0];
-  }
-
   return query(source, ref, tole_rate, sampling_rate, list,
                target_path, report_fmt);
 }
@@ -145,6 +136,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   if (tole_rate == 0)
     tole_rate = mco_suggestion (bl->k_mer);
 
+  // query each read from the query file
   while (kseq_read(seq) >= 0) {
     File_head->reads_num++;
 

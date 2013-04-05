@@ -87,6 +87,12 @@ as follows:
 $ ./facs query -r "seq=GATTACA" -q contaminated_sample.fastq.gz -f "json"
 ```
 
+Or piped, like any other UNIX program:
+
+```
+cat ../tests/data/synthetic_fastq/test200.fastq | ./facs query -r ../tests/data/bloom/eschColi_K12.bloom -f "json"
+```
+
 When finished, some metrics will be returned to `stdout`, in json format by default, indicating
 how many reads might be contaminated with ecoli in that particular sample:
 
