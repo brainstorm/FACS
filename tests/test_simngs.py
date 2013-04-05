@@ -36,15 +36,15 @@ class SimNGSTest(unittest.TestCase):
             os.chdir("src")
             subprocess.check_call(["make"])
 
-        if not os.path.exists(dirname):
-            shutil.move(simngs, self.progs)
-            shutil.move(simlib, self.progs)
-            shutil.move(runfile, self.progs)
+#        if not os.path.exists(dirname):
+	shutil.move(simngs, self.progs)
+	shutil.move(simlib, self.progs)
+	shutil.move(runfile, self.progs)
 
     def test_2_run_simNGS(self):
         """ Generates a synthetic library and runs with built-in simNGS runfile
         """
-        reads = "100"
+        reads = "1000000"
         simngs = os.path.join(self.progs, "simNGS")
         simlib = os.path.join(self.progs, "simLibrary")
         runfile = os.path.join(self.progs, "s_3_4x.runfile")
