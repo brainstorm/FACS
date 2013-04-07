@@ -77,36 +77,33 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
       begin += 1;
 
       if (model == 'r')
-	rev_trans (key);
+        rev_trans (key);
 
       if (count >= bl->k_mer) {
-	  mark = 1;
-	  count = 0;
+	    mark = 1;
+	    count = 0;
       }
 
       if (strlen (key) == bl->k_mer) {
-	  if (bloom_check (bl, key)) {
-	      match_time++;
-	      if (prev == 1)
-		conse++;
-	      else {
-		  conse += bl->k_mer;
-		  prev = 1;
-	      }
+          if (bloom_check (bl, key)) {
+              match_time++;
+              if (prev == 1)
+                conse++;
+              else {
+                  conse += bl->k_mer;
+                  prev = 1;
+              }
 
-	      if (mark == 1) {
-		  match_s += (bl->k_mer - 1);
-		  mark = 0;
-	      } else
-	      	  match_s++;
-	    }
-
-	  else {
-	      prev = 0;
-	  }
-	  
-	  count++;
-	}			//outside if
+              if (mark == 1) {
+                  match_s += (bl->k_mer - 1);
+                  mark = 0;
+              } else
+                  match_s++;
+	        } else {
+                  prev = 0;
+	        }
+	        count++;
+	  }			//outside if
       length--;
     }				// end while
 
