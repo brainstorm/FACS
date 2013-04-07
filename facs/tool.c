@@ -30,26 +30,27 @@ query_read(char *begin, int length, char model, bloom * bl,
 
   while (len > bl->k_mer) {
       if (signal == 1)
-	break;
+	    break;
 
       if (len >= bl->k_mer) {
-	  memcpy (key, p, sizeof (char) * bl->k_mer);	//need to be tested
-	  key[bl->k_mer] = '\0';
-	  p += bl->k_mer;
-	  previous = p;
-	  len -= bl->k_mer;
+          memcpy (key, p, sizeof (char) * bl->k_mer);	//need to be tested
+          key[bl->k_mer] = '\0';
+          p += bl->k_mer;
+          previous = p;
+          len -= bl->k_mer;
       } else {
-	  memcpy (key, previous + len, sizeof (char) * bl->k_mer);
-	  p += (bl->k_mer - len);
-	  signal = 1;
+          memcpy (key, previous + len, sizeof (char) * bl->k_mer);
+          p += (bl->k_mer - len);
+          signal = 1;
       }
 
       if (model == 'r')
-	rev_trans (key);
+        rev_trans (key);
 
       if (bloom_check (bl, key)) {
-	  result = read_full_check (bl, begin, length, model, tole_rate, File_head);
-	  if (result > 0)
+	    result = read_full_check (bl, begin, length, model, tole_rate, File_head);
+
+      if (result > 0)
 	    return result;
 	  else if (model == 'n')
 	    break;
@@ -68,12 +69,13 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   float result;
   int len = length;
   int count = 0, match_s = 0, mark = 1, match_time = 0;
-  char *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
+  char *previous, *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
   short prev = 0, conse = 0;
 
   while (length >= bl->k_mer) {
       memcpy (key, begin, sizeof (char) * bl->k_mer);
       key[bl->k_mer] = '\0';
+      previous = begin;
       begin += 1;
 
       if (model == 'r')
@@ -86,11 +88,13 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 
 // "old" scoring system
 
-      if (mark==1) {
-        match_s += (bl->k_mer - 1);
-        mark = 0;
+      if (bloom_check(bl, key)) {
+          if (mark==1) {
+            match_s += (bl->k_mer - 1);
+            mark = 0;
       } else
           match_s++;
+      }
 
       length--;
   }
@@ -121,7 +125,12 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 */
 
   free(key);
+
+// "old" scoring system result calculation
+  result = (float) match_s / (float) length;
   
+/* "new" scoring system result calculations
+ 
   result = (float) (match_time * bl->k_mer + conse) /
   	   (float) (len * bl->k_mer - 2 * bl->dx + len - bl->k_mer + 1);
 
@@ -129,6 +138,8 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   File_head->hits += match_time;
 #pragma omp atomic
   File_head->all_k += (len - bl->k_mer);
+
+*/
 
   if (result >= tole_rate)
     return match_s;
