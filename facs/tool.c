@@ -84,6 +84,18 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 	    count = 0;
       }
 
+// "old" scoring system
+
+      if (mark==1) {
+        match_s += (bl->k_mer - 1);
+        mark = 0;
+      } else
+          match_s++;
+
+      length--;
+  }
+
+/* "new" scoring system
       if (strlen (key) == bl->k_mer) {
           if (bloom_check (bl, key)) {
               match_time++;
@@ -106,6 +118,7 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 	  }			//outside if
       length--;
     }				// end while
+*/
 
   free(key);
   
@@ -261,7 +274,7 @@ void isodate(char* buf) {
      * timestamp string. Also, because sprintf always writes a null, we have to
      * write the subsecond value as well as the rest of the string already there.
      */
-    sprintf(timestamp + 20, "%03d%s", tv.tv_usec / 1000, timestamp + 23);
+    sprintf(timestamp + 20, "%03ld%s", tv.tv_usec / 1000, timestamp + 23);
     sprintf(buf, "%s", timestamp);
 }
 
