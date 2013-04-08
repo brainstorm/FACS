@@ -69,11 +69,10 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   float result;
   int len = length;
   int count = 0, match_s = 0, mark = 1, match_time = 0;
-  char *previous, *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
+  char *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
   short prev = 0, conse = 0;
 
   while (length >= bl->k_mer) {
-      previous = begin;
       begin += 1;
 
       if (model == 'r')
