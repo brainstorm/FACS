@@ -84,51 +84,30 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 	    count = 0;
       }
 
-// "old" scoring system
+      // "new" scoring system
+      if (bloom_check (bl, key, bl->k_mer)) {
+          match_time++;
+          if (prev == 1)
+            conse++;
+          else {
+              conse += bl->k_mer;
+              prev = 1;
+          }
 
-      if (bloom_check(bl, begin, bl->k_mer)) {
-          if (mark==1) {
-            match_s += (bl->k_mer - 1);
-            mark = 0;
-      } else
-          match_s++;
-      }
-
-      length--;
-  }
-
-/* "new" scoring system
-      if (strlen (key) == bl->k_mer) {
-          if (bloom_check (bl, key)) {
-              match_time++;
-              if (prev == 1)
-                conse++;
-              else {
-                  conse += bl->k_mer;
-                  prev = 1;
-              }
-
-              if (mark == 1) {
-                  match_s += (bl->k_mer - 1);
-                  mark = 0;
-              } else
-                  match_s++;
-	        } else {
-                  prev = 0;
-	        }
-	        count++;
-	  }			//outside if
-      length--;
-    }				// end while
-*/
+          if (mark == 1) {
+              match_s += (bl->k_mer - 1);
+              mark = 0;
+          } else
+              match_s++;
+        } else {
+              prev = 0;
+        }
+        count++;
+        length--;
+    }
 
   free(key);
 
-// "old" scoring system result calculation
-  result = (float) match_s / (float) length;
-  
-/* "new" scoring system result calculations
- 
   result = (float) (match_time * bl->k_mer + conse) /
   	   (float) (len * bl->k_mer - 2 * bl->dx + len - bl->k_mer + 1);
 
@@ -136,8 +115,6 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   File_head->hits += match_time;
 #pragma omp atomic
   File_head->all_k += (len - bl->k_mer);
-
-*/
 
   if (result >= tole_rate)
     return match_s;

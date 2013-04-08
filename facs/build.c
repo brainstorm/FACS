@@ -147,11 +147,10 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   while (kseq_read(seq) >= 0) {
     parts = seq->seq.l/bl->k_mer;
 
-
     while (parts <= seq->seq.l+2) {
         read_chunk = substr(seq->seq.s, k_mer_window,
                             sizeof(bl->k_mer));
-        //printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
+        printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
         bloom_add(bl, read_chunk, seq->seq.l);
         k_mer_window++;
         parts++;
