@@ -73,8 +73,7 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   short prev = 0, conse = 0;
 
   while (length >= bl->k_mer) {
-      memcpy (key, begin, sizeof (char) * bl->k_mer);
-      key[bl->k_mer] = '\0';
+      begin = begin*(1 + sizeof(char)*bl->k_mer);
       previous = begin;
       begin += 1;
 
@@ -88,7 +87,7 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 
 // "old" scoring system
 
-      if (bloom_check(bl, key)) {
+      if (bloom_check(bl, begin, n)) {
           if (mark==1) {
             match_s += (bl->k_mer - 1);
             mark = 0;

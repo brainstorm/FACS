@@ -129,53 +129,43 @@ bloom_destroy (bloom * bloom)
 }
 
 int
-bloom_check (bloom * bloom, char *str)
+bloom_check (bloom * bloom, char *str, size_t len)
 {
-//printf("In bloom_check\n");
-  return bloom_test (bloom, str, RO);
+  return bloom_test (bloom, str, len, RO);
 }
 
 int
-bloom_add (bloom * bloom, char *str)
+bloom_add (bloom * bloom, char *str, size_t len)
 {
   int ret;
-  //printf("key--> %s\n",str);
-  ret = bloom_test (bloom, str, SET);
+  ret = bloom_test (bloom, str, len, SET);
   if (ret == 0)
-    {
       bloom->inserts++;
-    }
   return ret;
 }
 
 int
-bloom_test (bloom * bloom, char *str, int mode)
+bloom_test (bloom * bloom, char *str, size_t len, int mode)
 {
   int i, hit;
   BIGNUM ret;
-  //printf("In test\n");
   /* as many times as our ideal hash count dictates, salt our key
    * and hash it into the bit vector */
   hit = 1;
-  for (i = 0; i < bloom->stat.ideal_hashes; i++)
-    {
+  for (i = 0; i < bloom->stat.ideal_hashes; i++) {
 
       ret = bloom_hash (bloom, str, i, bloom->k_mer);
 
-      if (!test (bloom->vector, ret))
-	{
-	  hit = 0;
-	  if (mode == SET)
-	    {
-	      set (bloom->vector, ret);
-	    }
-	  else
-	    {
-	      /* if we are merely testing, we are done. */
-	      return hit;
-	    }
-	}
-    }
+      if (!test (bloom->vector, ret)) {
+          hit = 0;
+          if (mode == SET) {
+              set (bloom->vector, ret);
+          } else {
+              /* if we are merely testing, we are done. */
+              return hit;
+          }
+	  }
+   }
 
   return hit;
 }

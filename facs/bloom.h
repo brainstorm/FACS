@@ -2,6 +2,7 @@
 #define _BLOOM
 
 #include <limits.h>
+#include <stddef.h>
 
 #define BIGNUM unsigned long long
 #define BIGNUM_STR "unsigned long"
@@ -99,9 +100,9 @@ extern BIGCAST get_size (char *filename);
 extern int bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity,
 		       double error_rate, int hashes, hash_t hash, int flags);
 
-extern int bloom_check (bloom * bloom, char *str);
-extern int bloom_add (bloom * bloom, char *str);
-extern int bloom_test (bloom * bloom, char *str, int MODE);
+extern int bloom_check (bloom * bloom, char *str, size_t len);
+extern int bloom_add (bloom * bloom, char *str, size_t len);
+extern int bloom_test (bloom * bloom, char *str, size_t len, int MODE);
 extern void bloom_destroy (bloom * bloom);
 
 extern int sketchy_randoms (randoms * rands, int cnt);
