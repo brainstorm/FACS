@@ -111,7 +111,7 @@ init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer,
 int
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
 {
-  char* read_chunk = NULL;
+  char* read_chunk;
   char* position = mmaping(ref_name);
   float parts;
   gzFile fp;
@@ -141,14 +141,22 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
 
   seq = kseq_init(fp);
 
+  //k_mer sliding window counter
+  int k_mer_window = 0;
+
   while (kseq_read(seq) >= 0) {
     parts = seq->seq.l/bl->k_mer;
-    read_chunk = substr(seq->seq.s, *(1+parts));
-    //XXX: http://en.wikipedia.org/wiki/Stride_of_an_array
-    while (parts < seq->seq.l)
-        printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
-        //bloom_add(bl, part_read, seq->seq.l);
+
+
+    while (parts <= seq->seq.l+2) {
+        read_chunk = substr(seq->seq.s, k_mer_window,
+                            sizeof(bl->k_mer));
+        //printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
+        bloom_add(bl, read_chunk, seq->seq.l);
+        k_mer_window++;
         parts++;
+    }
+
   }
 
   if(ref_name)

@@ -96,7 +96,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   /* 
    * TODO: Implement sampling
    *       OpenMP it
-   *       Buffering/Chunking
+   *       Buffering/Chunking? Doesn't stdin handle this well already?
    */
 
   gzFile fp;
@@ -120,14 +120,17 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   } else if (strstr(query, "seq=")) {
   	// We just query 1 read
   	File_head->reads_num++;
-  	// read query file vs inline "-r seq=GATTACA" argument
-        read_qry = substr(query, 4, strlen(query)-4);
-        printf("%s,%d\n", read_qry, read);
-    	read = query_read(read_qry, strlen(read_qry), 'n', bl, tole_rate, File_head);
-    	if(read)
-    		File_head->reads_contam++;
-  	report(File_head, read_qry, report_fmt, target_path);
+    // read query file vs inline "-r seq=GATTACA" argument
+    read_qry = substr(query, 4, strlen(query)-4);
+    printf("%s,%d\n", read_qry, read);
+    read = query_read(read_qry, strlen(read_qry), 'n', bl, tole_rate, File_head);
+
+    if(read)
+        File_head->reads_contam++;
+  
+    report(File_head, read_qry, report_fmt, target_path);
   	return 0;
+
   } else
   	fp = gzdopen(open(query, O_RDONLY), "r");
 
@@ -151,5 +154,6 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   kseq_destroy(seq);
   gzclose(fp);
   bloom_destroy(bl);
+
   return 0;
 }

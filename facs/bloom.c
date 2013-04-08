@@ -121,7 +121,6 @@ bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
 void
 bloom_destroy (bloom * bloom)
 {
-
   memset (bloom->vector, 0,
 	  sizeof (char) * ((long long) (bloom->stat.elements / 8) + 1));
   free (bloom->vector);

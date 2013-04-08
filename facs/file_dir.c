@@ -99,15 +99,15 @@ make_list (char *file_user, char *list_user)
       head->next = NULL;
     }
 
-  else if (is_dir (file_user))
+  else if (is_dir(file_user))
     {
-      dir = opendir (file_user);
+      dir = (struct DIR*)opendir(file_user);
       if (dir == NULL)
 	{
 	  perror ("Empty dir\n");
 	  exit (-1);
 	}
-      while ((dir_info = readdir (dir)) != NULL)
+      while ((dir_info = readdir((DIR*)dir)) != NULL)
 	{
 	  char *file_path = (char *) malloc (300 * sizeof (char));
 	  memset (file_path, 0, 300);
@@ -121,7 +121,7 @@ make_list (char *file_user, char *list_user)
 
 	  F_set *fset = NEW (F_set);
 	  fset->filename = file_path;
-	  fset->number = &number;
+	  fset->number = (short)&number;
 	  printf ("fset->%d\n", fset->number);
 	  fset->next = head->next;
 	  head->next = fset;

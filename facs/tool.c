@@ -47,7 +47,7 @@ query_read(char *begin, int length, char model, bloom * bl,
       if (model == 'r')
         rev_trans (key);
 
-      if (bloom_check (bl, key)) {
+      if (bloom_check (bl, key, bl->k_mer)) {
 	    result = read_full_check (bl, begin, length, model, tole_rate, File_head);
 
       if (result > 0)
@@ -73,7 +73,6 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   short prev = 0, conse = 0;
 
   while (length >= bl->k_mer) {
-      begin = begin*(1 + sizeof(char)*bl->k_mer);
       previous = begin;
       begin += 1;
 
@@ -87,7 +86,7 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
 
 // "old" scoring system
 
-      if (bloom_check(bl, begin, n)) {
+      if (bloom_check(bl, begin, bl->k_mer)) {
           if (mark==1) {
             match_s += (bl->k_mer - 1);
             mark = 0;
@@ -284,7 +283,7 @@ void isodate(char* buf) {
      * timestamp string. Also, because sprintf always writes a null, we have to
      * write the subsecond value as well as the rest of the string already there.
      */
-    sprintf(timestamp + 20, "%03ld%s", tv.tv_usec / 1000, timestamp + 23);
+    sprintf(timestamp + 20, "%03d%s", tv.tv_usec / 1000, timestamp + 23);
     sprintf(buf, "%s", timestamp);
 }
 
