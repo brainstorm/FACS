@@ -23,37 +23,36 @@ int
 query_read(char *begin, int length, char model, bloom * bl, 
            float tole_rate, F_set * File_head)
 {
-  char *p = begin;
+  char *cur = begin;
+  char *prev = begin;
+
   int len = length;
   int signal = 0, result = 0;
-  char *previous, *key = (char *) malloc (bl->k_mer * sizeof(char)+1);
-
+  
   while (len > bl->k_mer) {
+      //printf("%d, %d, %s\n", len, bl->k_mer, cur);
       if (signal == 1)
 	    break;
 
       if (len >= bl->k_mer) {
-          memcpy (key, p, sizeof (char) * bl->k_mer);	//need to be tested
-          key[bl->k_mer] = '\0';
-          p += bl->k_mer;
-          previous = p;
+          prev = cur;
+          cur += bl->k_mer;
           len -= bl->k_mer;
       } else {
-          memcpy (key, previous + len, sizeof (char) * bl->k_mer);
-          p += (bl->k_mer - len);
+          cur += len - bl->k_mer;
           signal = 1;
       }
 
-      if (model == 'r')
-        rev_trans (key);
+//      if (model == 'r')
+//        rev_trans (cur);
 
-      if (bloom_check (bl, key, bl->k_mer)) {
-	    result = read_full_check (bl, begin, length, model, tole_rate, File_head);
+      if (bloom_check (bl, cur, bl->k_mer)) {
+        result = read_full_check (bl, begin, length, model, tole_rate, File_head);
 
-      if (result > 0)
-	    return result;
-	  else if (model == 'n')
-	    break;
+        if (result > 0)
+            return result;
+        else if (model == 'n')
+            break;
       }
   }
 
@@ -66,17 +65,16 @@ query_read(char *begin, int length, char model, bloom * bl,
 int
 read_full_check (bloom * bl, char *begin, int length, char model, float tole_rate, F_set * File_head)
 {
+  char *cur = begin;
   float result;
   int len = length;
   int count = 0, match_s = 0, mark = 1, match_time = 0;
-  char *key = (char *) malloc (bl->k_mer * sizeof (char) + 1);
   short prev = 0, conse = 0;
 
   while (length >= bl->k_mer) {
-      begin += 1;
 
-      if (model == 'r')
-        rev_trans (key);
+//      if (model == 'r')
+//        rev_trans (cur);
 
       if (count >= bl->k_mer) {
 	    mark = 1;
@@ -84,7 +82,8 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
       }
 
       // "new" scoring system
-      if (bloom_check (bl, key, bl->k_mer)) {
+      //printf("%d, %d, %s\n", len, bl->k_mer, cur);
+      if (bloom_check (bl, cur, bl->k_mer)) {
           match_time++;
           if (prev == 1)
             conse++;
@@ -101,11 +100,11 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
         } else {
               prev = 0;
         }
+
         count++;
         length--;
+        *cur++;
     }
-
-  free(key);
 
   result = (float) (match_time * bl->k_mer + conse) /
   	   (float) (len * bl->k_mer - 2 * bl->dx + len - bl->k_mer + 1);

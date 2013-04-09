@@ -434,47 +434,43 @@ rev_trans (char *s)
   int i;
   int j;
 
-  for (i = 0, j = strlen (s) - 1; i < j; ++i, --j)
-    {
+  for (i = 0, j = strlen (s) - 1; i < j; ++i, --j) {
       char c = s[i];
       s[i] = s[j];
       s[j] = c;
-    }
+  }
 
   i = 0;
 
-  while (i < strlen (s))
-    {
-      switch (s[i])
-	{
-	case 'A':
-	  s[0] = 'T';
-	  break;
-	case 'C':
-	  s[0] = 'G';
-	  break;
-	case 'G':
-	  s[0] = 'C';
-	  break;
-	case 'T':
-	  s[0] = 'A';
-	  break;
-	case 'a':
-	  s[0] = 't';
-	  break;
-	case 'c':
-	  s[0] = 'g';
-	  break;
-	case 'g':
-	  s[0] = 'c';
-	  break;
-	case 't':
-	  s[0] = 'a';
-	  break;
-	}
+  while (i < strlen (s)) {
+      switch (s[i]) {
+        case 'A':
+          s[0] = 'T';
+          break;
+        case 'C':
+          s[0] = 'G';
+          break;
+        case 'G':
+          s[0] = 'C';
+          break;
+        case 'T':
+          s[0] = 'A';
+          break;
+        case 'a':
+          s[0] = 't';
+          break;
+        case 'c':
+          s[0] = 'g';
+          break;
+        case 'g':
+          s[0] = 'c';
+          break;
+        case 't':
+          s[0] = 'a';
+          break;
+      }
       s++;
-    }
-
+  }
 }
 
 char *
