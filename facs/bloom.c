@@ -410,12 +410,12 @@ write_result (char *filename, char *detail)
 void
 rev_trans (char *s)
 {
-
-  int i;
-  int j;
+// Reverse complement for a DNA sequence
+  char c;
+  int i,j;
 
   for (i = 0, j = strlen (s) - 1; i < j; ++i, --j) {
-      char c = s[i];
+      c = s[i];
       s[i] = s[j];
       s[j] = c;
   }

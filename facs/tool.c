@@ -43,8 +43,8 @@ query_read(char *begin, int length, char model, bloom * bl,
           signal = 1;
       }
 
-//      if (model == 'r')
-//        rev_trans (cur);
+      if (model == 'r')
+        rev_trans (cur);
 
       if (bloom_check (bl, cur, bl->k_mer)) {
         result = read_full_check (bl, begin, length, model, tole_rate, File_head);
@@ -110,15 +110,17 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   	   (float) (len * bl->k_mer - 2 * bl->dx + len - bl->k_mer + 1);
 
 #pragma omp atomic
+{
   File_head->hits += match_time;
-#pragma omp atomic
   File_head->all_k += (len - bl->k_mer);
+}
 
   if (result >= tole_rate)
     return match_s;
   else
     return 0;
 }
+
 
 int
 get_parainfo (char *full, Queue * head)
@@ -262,44 +264,47 @@ void isodate(char* buf) {
     sprintf(buf, "%s", timestamp);
 }
 
-void
+char*
 report(F_set * File_head, char* query, char* fmt, char* prefix)
 {
-  char buffer[200] = { 0 };
+  static char buffer[800] = { 0 };
   float contamination_rate = (float) (File_head->reads_contam) /
                              (float) (File_head->reads_num);
 
   if(!fmt){
-      return;
+      return "err";
   // JSON output format
   } else if(!strcmp(fmt, "json")) {
       isodate(buffer);
 
-      printf("{\n");
-      printf("\t\"timestamp\": \"%s\"\n", buffer);
-      printf("\t\"sample\": \"%s\"\n", basename(query)); //sample (query)
-      printf("\t\"bloom_filter\": \"%s\"\n", basename(File_head->filename)); //reference
-      printf("\t\"total_read_count\": %lld,\n", File_head->reads_num);
-      printf("\t\"contaminated_reads\": %lld,\n", File_head->reads_contam);
-      printf("\t\"total_hits\": %lld,\n", File_head->hits);
-      printf("\t\"contamination_rate\": %f,\n", contamination_rate);
-      printf("}\n");
+      sprintf(buffer, "{\n");
+      sprintf(buffer, "\t\"timestamp\": \"%s\"\n", buffer);
+      sprintf(buffer, "\t\"sample\": \"%s\"\n", basename(query)); //sample (query)
+      sprintf(buffer, "\t\"bloom_filter\": \"%s\"\n", basename(File_head->filename)); //reference
+      sprintf(buffer, "\t\"total_read_count\": %lld,\n", File_head->reads_num);
+      sprintf(buffer, "\t\"contaminated_reads\": %lld,\n", File_head->reads_contam);
+      sprintf(buffer, "\t\"total_hits\": %lld,\n", File_head->hits);
+      sprintf(buffer, "\t\"contamination_rate\": %f,\n", contamination_rate);
+      sprintf(buffer, "}\n");
 
   // TSV output format
   } else if (!strcmp(fmt, "tsv")) {
-      printf("sample\tbloom_filter\ttotal_read_count\t\
+      sprintf(buffer, "sample\tbloom_filter\ttotal_read_count\t\
 contaminated_reads\tcontamination_rate\n");
 
-      printf("%s\t%s\t%lld\t%lld\t%f\n", basename(query),
+      sprintf(buffer, "%s\t%s\t%lld\t%lld\t%f\n", basename(query),
               basename(File_head->filename), File_head->reads_num,
               File_head->reads_contam, contamination_rate);
   }
+
+  return buffer;
 }
 
 char* 
 substr(const char* str, size_t begin, size_t len) 
 {
-	if (str == 0 || strlen(str) == 0 || strlen(str) < begin || strlen(str) < (begin+len))
+	if (str == 0 || strlen(str) == 0 || strlen(str) < begin
+        || strlen(str) < (begin+len))
 		return 0; 
 	return strndup(str + begin, len); 
 } 
