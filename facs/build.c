@@ -81,32 +81,7 @@ build_main (int argc, char **argv)
   return 0;
 }
 
-void
-init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer,
-	    char *filename)
-{
-  int flags = 3;
-  get_suggestion (&bl->stat, capacity, error_rate);
 
-#ifdef DEBUG
-  printf ("Capacity: %lld\n", bl->stat.capacity);
-  printf ("Vector size: %lld\n", bl->stat.elements);
-  printf ("Ideal hashes: %d\n", bl->stat.ideal_hashes);
-  printf ("Error rate: %f\n", bl->stat.e);
-  printf ("Real size: %lld\n", bl->stat.elements / 8);
-#endif
-
-  bloom_init (bl, bl->stat.elements, bl->stat.capacity, bl->stat.e,
-	      bl->stat.ideal_hashes, NULL, flags);
-  
-  if (k_mer != 0)
-    bl->k_mer = k_mer;
-  else
-    bl->k_mer = kmer_suggestion (get_size (filename));
-
-  bl->dx = dx_add (bl->k_mer);
-  printf ("k_mer->%d\n", bl->k_mer);
-}
 
 int
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
@@ -125,29 +100,31 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
     bl->k_mer = kmer_suggestion (get_size (ref_name));
 
   bl->stat.e = error_rate;
-  bl->dx = dx_add (bl->k_mer);
-  bl->stat.capacity = strlen (position);
-  get_rec (&bl->stat);
+  bl->dx = dx_add(bl->k_mer);
+  bl->stat.capacity = strlen(position);
+  get_rec(&bl->stat);
 
   bloom_init(bl, bl->stat.elements, bl->stat.capacity,
              bl->stat.e, bl->stat.ideal_hashes, NULL, 3);
 
-  // Reads sequences, partitions them in k_mer size and
-  // adds them to the bloom filter
-  if(!ref_name)
+  // Files or stdin input
+  if(!ref_name || !bloom_file)
     fp = gzdopen(fileno(stdin), "r");
-  else
+  else {
   	fp = gzdopen(open(ref_name, O_RDONLY), "r");
+  }
 
   seq = kseq_init(fp);
 
   //k_mer sliding window counter
   int k_mer_window = 0;
 
+  // Reads sequences, partitions them in k_mer size and
+  // adds them to the bloom filter
   while (kseq_read(seq) >= 0) {
     parts = seq->seq.l/bl->k_mer;
 
-    while (parts <= seq->seq.l+2) {
+    while (parts <= seq->seq.l) {
         read_chunk = substr(seq->seq.s, k_mer_window,
                             sizeof(bl->k_mer));
         printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
@@ -155,7 +132,6 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
         k_mer_window++;
         parts++;
     }
-
   }
 
   if(ref_name)

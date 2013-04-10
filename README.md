@@ -145,7 +145,16 @@ Python 2.6.6 (r266:84292, Jun 18 2012, 09:57:52)
 Type "help", "copyright", "credits" or "license" for more information.
 >>> import facs
 >>> facs.build("ecoli.fasta", "ecoli.bloom")
+>>> facs.query("SRR362119.filt.fastq.gz", "ecoli.bloom")
+{
+    "timestamp": "2013-04-10T15:54:35.652+0200"
+    "sample": "SRR362119.filt.fastq.gz"
+    "bloom_filter": "ecoli.bloom"
+    "total_read_count": 15460,
+    "contaminated_reads": 0,
+    "total_hits": 2939,
+    "contamination_rate": 0.000000,
+}
 >>> facs.query("seq=GATTACA", "ecoli.bloom")
->>> facs.query("contaminated_sample.fastq.gz", "ecoli.bloom")
 >>> facs.remove("contaminated_sample.fastq", "ecoli.bloom")
 ```

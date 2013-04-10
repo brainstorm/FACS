@@ -97,8 +97,10 @@ extern double get_sigma (BIGNUM num_hit, double prob);
 extern double get_evalue (BIGNUM number, double mu, double sigma);
 extern BIGCAST get_size (char *filename);
 
+//XXX
 extern int bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity,
 		       double error_rate, int hashes, hash_t hash, int flags);
+extern void init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer, char *filename);
 
 extern int bloom_check (bloom * bloom, char *str, size_t len);
 extern int bloom_add (bloom * bloom, char *str, size_t len);

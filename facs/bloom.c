@@ -24,6 +24,32 @@ int seed[20] =
   10671313, 10731313, 10821313, 10881313, 10951313, 11001313
 };
 
+void
+init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer,
+	    char *filename)
+{
+  int flags = 3;
+  get_suggestion (&bl->stat, capacity, error_rate);
+
+#ifdef DEBUG
+  printf ("Capacity: %lld\n", bl->stat.capacity);
+  printf ("Vector size: %lld\n", bl->stat.elements);
+  printf ("Ideal hashes: %d\n", bl->stat.ideal_hashes);
+  printf ("Error rate: %f\n", bl->stat.e);
+  printf ("Real size: %lld\n", bl->stat.elements / 8);
+#endif
+
+  bloom_init (bl, bl->stat.elements, bl->stat.capacity, bl->stat.e,
+	      bl->stat.ideal_hashes, NULL, flags);
+  
+  if (k_mer != 0)
+    bl->k_mer = k_mer;
+  else
+    bl->k_mer = kmer_suggestion (get_size (filename));
+
+  bl->dx = dx_add (bl->k_mer);
+}
+
 int
 bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
 	    int hashes, hash_t hash, int flags)
@@ -270,91 +296,61 @@ prefix_make (char *filename, char *prefix, char *target)
 }
 
 int
-save_bloom (char *filename, bloom * bl, char *prefix, char *target)
+save_bloom (char *filename, bloom *bl, char *prefix, char *target)
 {
   char *bloom_file = NULL;
   int fd;
 
   bloom_file = prefix_make (filename, prefix, target);
-
 #ifdef DEBUG
   printf ("Bloom file to be written in: %s\n", bloom_file);
 #endif
 
-  if (prefix == NULL && target == NULL)
-    {
+  if (prefix == NULL && target == NULL) {
       strcat (bloom_file, ".bloom");
       bloom_file++;
-    }
-  else if (is_dir (target))
-    strcat (bloom_file, ".bloom");
+  } else if (is_dir (target))
+      strcat (bloom_file, ".bloom");
 
-#ifdef __APPLE__
   fd = open (bloom_file, O_RDWR | O_CREAT, PERMS);
-#else // assume linux
-  #ifndef __clang__
-    fd = open (bloom_file, O_RDWR | O_CREAT | O_LARGEFILE, PERMS);
-  #endif
-#endif
 
-  if (fd < 0)
-    {
-      perror (bloom_file);
-      return -1;
-    }
+  if (fd < 0) {
+      fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
+      exit(EXIT_FAILURE);
+  }
 
   BIGNUM total_size =
-    sizeof (bloom) + sizeof (char) * ((long long) (bl->stat.elements / 8) +
-				      1) +
-    sizeof (int) * (bl->stat.ideal_hashes + 1);
+    sizeof(bloom) + sizeof(char) * ((long long) (bl->stat.elements / 8) + 1)
+    +
+    sizeof(int) * (bl->stat.ideal_hashes + 1);
 
-#ifdef __APPLE__
-  if (ftruncate (fd, total_size) < 0)
-#else
-  #ifndef __clang__
-  if (ftruncate64 (fd, total_size) < 0)
-  #endif
-#endif
-    {
-      printf ("[%d]-ftruncate64 error: %s/n", errno, strerror (errno));
-      close (fd);
+  if (ftruncate (fd, total_size) < 0) {
+      printf("[%d]-ftruncate64 error: %s/n", errno, strerror (errno));
+      close(fd);
       return 0;
-    }
+  }
 
-  if (write (fd, bl, sizeof (bloom)) < 0)
-    {
-      perror (" error writing bloom file ");
-      exit (EXIT_FAILURE);
-    }
+  printf("%s\n", bloom_file); 
+  if (write(fd, bl, sizeof(bloom)) < 0) {
+      fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
+      exit(EXIT_FAILURE);
+  }
 
   total_size = (long long) (bl->stat.elements / 8) + 1;
 
   BIGNUM off = 0;
-  while (total_size > TWOG)
-    {
-      if (write (fd, bl->vector + off, sizeof (char) * TWOG) < 0)
-	{
-	  perror (" error writing bloom file ");
-	  exit (EXIT_FAILURE);
-	}
-      total_size -= TWOG;
-      off += TWOG;
-    }
-  if (write (fd, bl->vector + off, sizeof (char) * total_size) < 0)
-    {
-      perror (" error writing bloom file ");
+  
+  if (write (fd, bl->vector + off, sizeof (char) * total_size) < 0) {
+      fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit (EXIT_FAILURE);
-    };
-  close (fd);
+  };
 
-  memset (bl->vector, 0,
-	  sizeof (char) * ((long long) (bl->stat.elements / 8) + 1));
+  close (fd);
 
 #ifdef DEBUG
   printf ("big file process OK\n");
 #endif
   return 0;
-
 }
 
 int
@@ -367,37 +363,21 @@ load_bloom (char *filename, bloom * bl)
   printf ("bloom name->%s\n", filename);
 #endif
 
-#ifdef __APPLE__
   fd = open (filename, O_RDONLY, PERMS);
-#else
-  fd = open64 (filename, O_RDONLY, PERMS);
-#endif
 
-  if (fd < 0)
-    {
+  if (fd < 0) {
       perror (filename);
       exit (-1);
-    }
+  }
 
-  if (read (fd, bl, sizeof (bloom)) < 0)
-    {
+  if (read (fd, bl, sizeof (bloom)) < 0) {
       perror ("Problem reading bloom filter");
-    };
+  };
 
-  bl->vector =
-    (char *) malloc (sizeof (char) *
-		     ((long long) (bl->stat.elements / 8) + 1));
+  bl->vector = (char *) malloc (sizeof (char) *
+		       ((long long) (bl->stat.elements / 8) + 1));
 
   BIGNUM off = 0, total_size = ((long long) (bl->stat.elements / 8) + 1);
-
-  while (total_size > TWOG)
-    {
-      ret = read (fd, bl->vector + off, sizeof (char) * TWOG);
-      if (ret < 0)
-	perror ("Problem reading bloom filter");
-      total_size -= TWOG;
-      off += TWOG;
-    }
 
   ret = read (fd, bl->vector + off, sizeof (char) * total_size);
 
