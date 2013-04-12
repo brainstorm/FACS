@@ -1,6 +1,3 @@
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE
-#define _FILE_OFFSET_BITS 64
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,6 +74,13 @@ build_main (int argc, char **argv)
 	  }
   }
 
+  // Nothing to do here if no bloom file is specified
+  // XXX create same file with ".bloom"?
+  if (!bloom_file) {
+      fprintf(stderr, "error: No bloom file supplied (use -o)\n");
+      return build_usage();
+  }
+
   build (reference, bloom_file, k_mer, error_rate, NULL);
   return 0;
 }
@@ -87,15 +91,8 @@ int
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
 {
   char* read_chunk;
-  float parts;
   gzFile fp;
   kseq_t *seq = NULL;
- 
-  // Nothing to do here if no bloom file is supplied
-  if (!bloom_file) {
-      fprintf(stderr, "error: No bloom file supplied (use -o)\n");
-      return 1;
-  }
 
   bloom *bl = NEW (bloom);
   char* position = mmaping(ref_name);
@@ -116,30 +113,26 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   // Files or stdin input
   if(!ref_name)
     fp = gzdopen(fileno(stdin), "r");
-  else {
+  else
   	fp = gzdopen(open(ref_name, O_RDONLY), "r");
-  }
 
+  // Init uncompressed reads stream
   seq = kseq_init(fp);
 
-  //k_mer sliding window counter
-  char* k_mer_window = NULL;
+  // k_mer sliding window counter
+  int k_mer_window = 0;
 
-  // Reads sequences, partitions them in k_mer size and
-  // adds them to the bloom filter
+  // Iterates through reads (FASTA/FASTQ).
   while (kseq_read(seq) >= 0) {
-    // how many parts (mers) does the present read have?
-    //parts = seq->seq.l/bl->k_mer;
-    k_mer_window = seq->seq.s;
-
-    while (parts <= seq->seq.l) {
-        read_chunk = substr(seq->seq.s, (size_t)k_mer_window,
-                            sizeof(bl->k_mer));
-        printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
+    // adds them to the bloom filter by a sliding window.
+    while (k_mer_window <= (seq->seq.l - bl->k_mer)) {
+        read_chunk = substr(seq->seq.s, k_mer_window, bl->k_mer);
+        printf("%d,%s\n", bl->k_mer, read_chunk);
         bloom_add(bl, read_chunk, seq->seq.l);
         k_mer_window++;
-        parts++;
     }
+    printf("READ\n");
+    k_mer_window = 0;
   }
 
   if(ref_name)
