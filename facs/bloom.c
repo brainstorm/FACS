@@ -330,7 +330,6 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
       return 0;
   }
 
-  printf("%s\n", bloom_file); 
   if (write(fd, bl, sizeof(bloom)) < 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);

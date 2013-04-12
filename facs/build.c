@@ -87,20 +87,26 @@ int
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
 {
   char* read_chunk;
-  char* position = mmaping(ref_name);
   float parts;
   gzFile fp;
   kseq_t *seq = NULL;
-  
-  bloom *bl = NEW (bloom);
  
+  // Nothing to do here if no bloom file is supplied
+  if (!bloom_file) {
+      fprintf(stderr, "error: No bloom file supplied (use -o)\n");
+      return 1;
+  }
+
+  bloom *bl = NEW (bloom);
+  char* position = mmaping(ref_name);
+
   if (k_mer != 0)
     bl->k_mer = k_mer;
   else
     bl->k_mer = kmer_suggestion (get_size (ref_name));
 
   bl->stat.e = error_rate;
-  bl->dx = dx_add(bl->k_mer);
+ //XXX implicit declaration? bl->dx = dx_add(bl->k_mer);
   bl->stat.capacity = strlen(position);
   get_rec(&bl->stat);
 
@@ -108,7 +114,7 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
              bl->stat.e, bl->stat.ideal_hashes, NULL, 3);
 
   // Files or stdin input
-  if(!ref_name || !bloom_file)
+  if(!ref_name)
     fp = gzdopen(fileno(stdin), "r");
   else {
   	fp = gzdopen(open(ref_name, O_RDONLY), "r");
@@ -117,15 +123,17 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   seq = kseq_init(fp);
 
   //k_mer sliding window counter
-  int k_mer_window = 0;
+  char* k_mer_window = NULL;
 
   // Reads sequences, partitions them in k_mer size and
   // adds them to the bloom filter
   while (kseq_read(seq) >= 0) {
-    parts = seq->seq.l/bl->k_mer;
+    // how many parts (mers) does the present read have?
+    //parts = seq->seq.l/bl->k_mer;
+    k_mer_window = seq->seq.s;
 
     while (parts <= seq->seq.l) {
-        read_chunk = substr(seq->seq.s, k_mer_window,
+        read_chunk = substr(seq->seq.s, (size_t)k_mer_window,
                             sizeof(bl->k_mer));
         printf("%f,%d,%s\n", parts, bl->k_mer, read_chunk);
         bloom_add(bl, read_chunk, seq->seq.l);

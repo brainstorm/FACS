@@ -103,6 +103,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   kseq_t *seq = NULL;
 
   int read = 0;
+  static char* buff[800];
   char* read_qry = NULL;
   bloom *bl = NEW (bloom);
   F_set *File_head = make_list (bloom_filter, list);
@@ -120,9 +121,9 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   } else if (strstr(query, "seq=")) {
   	// We just query 1 read
   	File_head->reads_num++;
-    // read query file vs inline "-r seq=GATTACA" argument
-    read_qry = substr(query, 4, strlen(query)-4);
-    printf("%s,%d\n", read_qry, read);
+    // read query file vs inline "seq=" argument
+    read_qry = substr(query, strlen("seq="), strlen(query)-strlen("seq="));
+    //printf("%s,%d\n", read_qry, read);
     read = query_read(read_qry, strlen(read_qry), 'n', bl, tole_rate, File_head);
 
     if(read)
@@ -149,7 +150,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
     }
   }
 
-  report(File_head, query, report_fmt, target_path);
+  fprintf(stdout, report(File_head, query, report_fmt, target_path));
 
   kseq_destroy(seq);
   gzclose(fp);
