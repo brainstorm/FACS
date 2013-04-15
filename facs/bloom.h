@@ -95,7 +95,7 @@ BIGNUM mkprime (BIGNUM startval);
 extern double get_mu (BIGNUM num_hit, double prob);
 extern double get_sigma (BIGNUM num_hit, double prob);
 extern double get_evalue (BIGNUM number, double mu, double sigma);
-extern BIGCAST get_size (char *filename);
+extern BIGCAST get_filesize (char *filename);
 
 //XXX
 extern int bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity,
@@ -132,6 +132,5 @@ extern int save_bloom (char *filename, bloom * bl, char *prefix,
 extern int load_bloom (char *filename, bloom * bl);
 extern void rev_trans (char *s);
 
-extern char *mmaping (char *source);
 extern char *prefix_make (char *filename, char *prefix, char *target);
 #endif

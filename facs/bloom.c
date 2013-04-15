@@ -45,7 +45,7 @@ init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer,
   if (k_mer != 0)
     bl->k_mer = k_mer;
   else
-    bl->k_mer = kmer_suggestion (get_size (filename));
+    bl->k_mer = kmer_suggestion(get_filesize(filename));
 
   bl->dx = dx_add (bl->k_mer);
 }
@@ -225,15 +225,11 @@ test (char *big, BIGNUM index)
   finder (index, &dr);
   bucket = big[dr.index];
 
-  if ((bucket & dr.spot) == dr.spot)
-    {
+  if ((bucket & dr.spot) == dr.spot) {
       return 1;
-    }
-  else
-    {
+  } else {
       return 0;
-    }
-
+  }
 }
 
 int
@@ -452,43 +448,8 @@ rev_trans (char *s)
   }
 }
 
-char *
-mmaping (char *source)
-{
-  struct stat statbuf;
-
-  int fd = 0;
-  char *sm = NULL;
-
-#ifndef __clang__
-  if ((fd = open (source, O_RDONLY | O_LARGEFILE)) < 0) {
-#else
-  if ((fd = open (source, O_RDONLY)) < 0) {
-#endif
-      fprintf (stderr, "%s: %s\n", source, strerror (errno));
-      exit (EXIT_FAILURE);
-  }
-  if (fstat (fd, &statbuf) < 0) {
-      fprintf (stderr, "%s: %s\n", source, strerror (errno));
-      exit (EXIT_FAILURE);
-  } else if (statbuf.st_size == 0) {
-      fprintf (stderr, "%s: %s\n", source, "File is empty");
-      exit (-1);
-  }
-
-  sm = mmap (0, (BIGCAST) statbuf.st_size, PROT_READ,
-	     MAP_SHARED | MAP_NORESERVE, fd, 0);
-
-  if (MAP_FAILED == sm){
-      fprintf (stderr, "%s: %s\n", source, strerror (errno));
-      exit (EXIT_FAILURE);
-  }
-
-  return sm;
-}
-
 BIGCAST
-get_size (char *filename)
+get_filesize (char *filename)
 {
   struct stat buf;
   if (stat (filename, &buf) != -1){
