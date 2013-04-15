@@ -75,7 +75,7 @@ build_main (int argc, char **argv)
   }
 
   // Nothing to do here if no bloom file is specified
-  // XXX create same file with ".bloom"?
+  // XXX create same input filename but with ".bloom" extension?
   if (!bloom_file) {
       fprintf(stderr, "error: No bloom file supplied (use -o)\n");
       return build_usage();
@@ -90,7 +90,6 @@ build_main (int argc, char **argv)
 int
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
 {
-  char* read_chunk;
   gzFile fp;
   kseq_t *seq = NULL;
 
@@ -119,20 +118,17 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   // Init uncompressed reads stream
   seq = kseq_init(fp);
 
-  // k_mer sliding window counter
-  int k_mer_window = 0;
+  int cur;
 
   // Iterates through reads (FASTA/FASTQ).
   while (kseq_read(seq) >= 0) {
-    // adds them to the bloom filter by a sliding window.
-    while (k_mer_window <= (seq->seq.l - bl->k_mer)) {
-        read_chunk = substr(seq->seq.s, k_mer_window, bl->k_mer);
-        printf("%d,%s\n", bl->k_mer, read_chunk);
-        bloom_add(bl, read_chunk, seq->seq.l);
-        k_mer_window++;
+    // adding k_mers to a bloom filter via sliding window.
+    cur = 0;
+    while (cur <= (seq->seq.l - bl->k_mer)) {
+        //printf("%s\n", strndup(seq->seq.s + cur, bl->k_mer));
+        bloom_add(bl, strndup(seq->seq.s + cur, bl->k_mer), bl->k_mer);
+        cur++;
     }
-    printf("READ\n");
-    k_mer_window = 0;
   }
 
   if(ref_name)

@@ -335,8 +335,7 @@ report(F_set * File_head, char* query, char* fmt, char* prefix)
 char* 
 substr(const char* str, size_t begin, size_t len) 
 {
-	if (str == 0 || strlen(str) == 0 || strlen(str) < begin
-        || strlen(str) < (begin+len))
+	if (str == 0)
 		return 0; 
 	return strndup(str + begin, len); 
 } 
