@@ -42,7 +42,6 @@ build_main (int argc, char **argv)
   if (argc < 2)
     build_usage ();
 
-  char *position;
   BIGNUM capacity;
 
   int opt;
@@ -94,16 +93,15 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   kseq_t *seq = NULL;
 
   bloom *bl = NEW (bloom);
-  char* position = mmaping(ref_name);
 
   if (k_mer != 0)
     bl->k_mer = k_mer;
   else
-    bl->k_mer = kmer_suggestion (get_size (ref_name));
+    bl->k_mer = kmer_suggestion (get_filesize(ref_name));
 
   bl->stat.e = error_rate;
- //XXX implicit declaration? bl->dx = dx_add(bl->k_mer);
-  bl->stat.capacity = strlen(position);
+  bl->dx = dx_add(bl->k_mer);
+  bl->stat.capacity = get_filesize(ref_name);
   get_rec(&bl->stat);
 
   bloom_init(bl, bl->stat.elements, bl->stat.capacity,
@@ -131,8 +129,12 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
     }
   }
 
-  if(ref_name)
+  if(ref_name) {
+#ifdef DEBUG
+    printf("Writing resulting bloom filter to %s\n", bloom_file);
+#endif
     save_bloom(ref_name, bl, NULL, bloom_file);
+  }
 
   return 0;
 }
