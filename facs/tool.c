@@ -140,10 +140,9 @@ read_full_check (bloom * bl, char *begin, int length, char model, float tole_rat
   	   (float) (len * bl->k_mer - 2 * bl->dx + len - bl->k_mer + 1);
 
 #pragma omp atomic
-{
   File_head->hits += match_time;
+#pragma omp atomic
   File_head->all_k += (len - bl->k_mer);
-}
 
   if (result >= tole_rate)
     return match_s;
