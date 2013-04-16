@@ -101,7 +101,7 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
 
   bl->stat.e = error_rate;
   bl->dx = dx_add(bl->k_mer);
-  bl->stat.capacity = get_filesize(ref_name);
+  bl->stat.capacity = 1; // with streaming, we cannot calculate filesize nor capacity
   get_rec(&bl->stat);
 
   bloom_init(bl, bl->stat.elements, bl->stat.capacity,

@@ -295,6 +295,8 @@ int
 save_bloom (char *filename, bloom *bl, char *prefix, char *target)
 {
   FILE* fd;
+  int ret = 0;
+  
   char *bloom_file = NULL;
   BIGNUM total_size = 0;
   BIGNUM stat_elems = ((bl->stat.elements / 8) + 1) * sizeof(char);
@@ -325,16 +327,24 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
     +
     sizeof (int) * (bl->stat.ideal_hashes + 1);
 
-  // Write header?
-  if (fwrite(bl->vector, total_size, 1, fd) <= 0) {
+  printf("%lld\n", stat_elems);
+
+  // Truncating file by skipping first bytes... why?
+  if ((ret = fseek(fd, total_size, SEEK_END)) < 0) {
+      fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
+      exit(EXIT_FAILURE);
+  };
+
+  // Write bloom metadata/headers first
+  if ((ret = fwrite(bl, sizeof(bloom), 1, fd)) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
   };
   
-  // Write the rest?
+  // Write the bit vector itself
   total_size = stat_elems;
   
-  if (fwrite(bl->vector, total_size, 1, fd) <= 0) {
+  if ((ret = fwrite(bl->vector, total_size, 1, fd)) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
   };
@@ -345,7 +355,7 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
 #ifdef DEBUG
   printf ("Bloom filter file written in: %s\n", bloom_file);
 #endif
-  return 0;
+  return ret;
 }
 
 int
