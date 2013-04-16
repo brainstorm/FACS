@@ -129,12 +129,8 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
     }
   }
 
-  if(ref_name) {
-#ifdef DEBUG
-    printf("Writing resulting bloom filter to %s\n", bloom_file);
-#endif
+  if(ref_name)
     save_bloom(ref_name, bl, NULL, bloom_file);
-  }
 
   return 0;
 }

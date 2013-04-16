@@ -294,96 +294,95 @@ prefix_make (char *filename, char *prefix, char *target)
 int
 save_bloom (char *filename, bloom *bl, char *prefix, char *target)
 {
+  FILE* fd;
   char *bloom_file = NULL;
-  int fd;
+  BIGNUM total_size = 0;
+  BIGNUM stat_elems = ((bl->stat.elements / 8) + 1) * sizeof(char);
 
   bloom_file = prefix_make (filename, prefix, target);
+
 #ifdef DEBUG
   printf ("Bloom file to be written in: %s\n", bloom_file);
 #endif
 
+  // Append .bloom extension to filename
   if (prefix == NULL && target == NULL) {
       strcat (bloom_file, ".bloom");
       bloom_file++;
   } else if (is_dir (target))
       strcat (bloom_file, ".bloom");
 
-  fd = open (bloom_file, O_RDWR | O_CREAT, PERMS);
-
-  if (fd < 0) {
+  // Open stream
+  fd = fopen(bloom_file, "w+");
+  if (fd == NULL) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
   }
 
-  BIGNUM total_size =
-    sizeof(bloom) + sizeof(char) * ((long long) (bl->stat.elements / 8) + 1)
+  // Where does this point to?
+  total_size =
+    sizeof (bloom) + stat_elems 
     +
-    sizeof(int) * (bl->stat.ideal_hashes + 1);
+    sizeof (int) * (bl->stat.ideal_hashes + 1);
 
-  if (ftruncate (fd, total_size) < 0) {
-      printf("[%d]-ftruncate64 error: %s/n", errno, strerror (errno));
-      close(fd);
-      return 0;
-  }
-
-  if (write(fd, bl, sizeof(bloom)) < 0) {
+  // Write header?
+  if (fwrite(bl->vector, total_size, 1, fd) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
-  }
-
-  total_size = (long long) (bl->stat.elements / 8) + 1;
-
-  BIGNUM off = 0;
+  };
   
-  if (write (fd, bl->vector + off, sizeof (char) * total_size) < 0) {
+  // Write the rest?
+  total_size = stat_elems;
+  
+  if (fwrite(bl->vector, total_size, 1, fd) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
-      exit (EXIT_FAILURE);
+      exit(EXIT_FAILURE);
   };
 
-  close (fd);
+  fclose(fd);
+  free(bl);
 
 #ifdef DEBUG
-  printf ("big file process OK\n");
+  printf ("Bloom filter file written in: %s\n", bloom_file);
 #endif
   return 0;
 }
 
 int
-load_bloom (char *filename, bloom * bl)
+load_bloom (char *filename, bloom *bl)
 {
-  int fd;
+  FILE* fd;
   int ret;
+  
+  BIGNUM off = 0;
+  BIGNUM total_size = (long long) ((bl->stat.elements / 8) + 1) * sizeof(char);
 
 #ifdef DEBUG
-  printf ("bloom name->%s\n", filename);
+  printf ("Loading bloom filter %s\n", filename);
 #endif
 
-  fd = open (filename, O_RDONLY, PERMS);
+  fd = fopen (filename, "r");
 
-  if (fd < 0) {
-      perror (filename);
-      exit (-1);
+  if (fd == NULL) {
+      fprintf(stderr, "%s: %s\n", filename, strerror(errno));
+      exit(EXIT_FAILURE);
   }
 
-  if (read (fd, bl, sizeof (bloom)) < 0) {
-      perror ("Problem reading bloom filter");
+  if (fread(bl, sizeof(bloom), 1, fd) <= 0) {
+      fprintf(stderr, "%s: %s\n", filename, strerror(errno));
+      exit(EXIT_FAILURE);
   };
 
-  bl->vector = (char *) malloc (sizeof (char) *
-		       ((long long) (bl->stat.elements / 8) + 1));
+  bl->vector = (char *) malloc(total_size);
 
-  BIGNUM off = 0, total_size = ((long long) (bl->stat.elements / 8) + 1);
-
-  ret = read (fd, bl->vector + off, sizeof (char) * total_size);
+  ret = fread(bl->vector, total_size, 1, fd);
 
 #ifdef DEBUG
   if (ret > 0)
-    printf ("bloom filter read successfully\n");
-  else
-    ret = errno;
+    printf("Successfully read %lld bytes from %s\n", ret, filename);
 #endif
 
-  close (fd);
+  fclose(fd);
   return ret;
 }
 

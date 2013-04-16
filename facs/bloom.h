@@ -78,13 +78,13 @@ typedef struct file_list
   BIGCAST all_k;
   struct file_list *next;
 } F_set;
+
 /* these are modes to test_all() */
 #define RO 0
 #define SET 1
 #define BVERBOSE 2
 
 /* errors */
-
 #define ERR_MALLOC 1
 #define ERR_OVERFLOW 2
 #define ERR_UNKNOWN 3
@@ -97,7 +97,7 @@ extern double get_sigma (BIGNUM num_hit, double prob);
 extern double get_evalue (BIGNUM number, double mu, double sigma);
 extern BIGCAST get_filesize (char *filename);
 
-//XXX
+//XXX: why are there two bloom init functions?
 extern int bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity,
 		       double error_rate, int hashes, hash_t hash, int flags);
 extern void init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer, char *filename);
