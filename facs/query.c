@@ -96,15 +96,14 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
   /* 
    * TODO: Implement sampling
    *       OpenMP it
-   *       Buffering/Chunking? Doesn't stdin handle this well already?
    */
 
   gzFile fp;
   kseq_t *seq = NULL;
 
   int read = 0;
-  static char* buff[800];
   char* read_qry = NULL;
+  
   bloom *bl = NEW (bloom);
   F_set *File_head = make_list (bloom_filter, list);
 

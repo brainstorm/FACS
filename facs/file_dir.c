@@ -55,8 +55,6 @@ make_list (char *file_user, char *list_user)
   F_set *head = NEW (F_set);
   F_set *head1 = head;
 
-  char *mimi = NULL;
-  char *pos = NULL;
   int number = 0;
 
   if (is_file (file_user))
@@ -112,28 +110,3 @@ make_list (char *file_user, char *list_user)
   return head1->next;
 
 }
-
-/*
-void main()
-{
-//char *list = "test_l";
-char *list;
-char *single_file = "single_file";
-char *dir = "/home/apple/xt/dir";
-
-F_set *head;
-
-head = make_list(single_file,list);
-
-head = head->next;
-
-while (head)
-      {
-      printf("position->%s\n",head->filename);
-      //printf("next->%d\n",head->next);
-      head = head->next;
-      }
-
-return;
-}
-*/

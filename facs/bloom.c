@@ -24,70 +24,35 @@ int seed[20] =
   10671313, 10731313, 10821313, 10881313, 10951313, 11001313
 };
 
-void
-init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer,
-	    char *filename)
-{
-  int flags = 3;
-  get_suggestion (&bl->stat, capacity, error_rate);
-
-#ifdef DEBUG
-  printf ("Capacity: %lld\n", bl->stat.capacity);
-  printf ("Vector size: %lld\n", bl->stat.elements);
-  printf ("Ideal hashes: %d\n", bl->stat.ideal_hashes);
-  printf ("Error rate: %f\n", bl->stat.e);
-  printf ("Real size: %lld\n", bl->stat.elements / 8);
-#endif
-
-  bloom_init (bl, bl->stat.elements, bl->stat.capacity, bl->stat.e,
-	      bl->stat.ideal_hashes, NULL, flags);
-  
-  if (k_mer != 0)
-    bl->k_mer = k_mer;
-  else
-    bl->k_mer = kmer_suggestion(get_filesize(filename));
-
-  bl->dx = dx_add (bl->k_mer);
-}
-
 int
 bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
-	    int hashes, hash_t hash, int flags)
+	    int hashes, hash_t hash)
 {
-  if (size < 1)
-    {
+  if (size < 1) {
       fprintf (stderr, "overflow1\n");
       return -1;
-    }
-  else
-    {
+  } else {
       /* this may waste a little time, but we need to ensure
        * that our array has a prime number of elements, even
        * if we have been requested to do otherwise */
       bloom->stat.elements = find_close_prime (size);
-    }
+  }
 
-  if (hashes < 1)
-    {
+  if (hashes < 1) {
 #ifdef DEBUG
       fprintf (stderr, "hashes was %d,size %lld\n", hashes, size);
 #endif
       return -1;
 
-    }
-  else
-    {
+  } else {
       bloom->stat.ideal_hashes = hashes;
-    }
+  }
 
-  if (hash == NULL)
-    {
+  if (hash == NULL) {
       bloom->hash = (hash_t) HASH_FUNC;
-    }
-  else
-    {
+  } else {
       bloom->hash = hash;
-    }
+  }
 
   bloom->inserts = 0;
 
@@ -95,18 +60,15 @@ bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
 	If error rate and capacity were not specified, but size and num hashes were,
 	we can calculate the missing elements.
 	**/
-  if (capacity == 0 || error_rate == 0)
-    {
+  if (capacity == 0 || error_rate == 0) {
       // From wikipedia, num hashes k that minimizes probability of error is k =~ (0.7 m) / n
       // Therefore n =~ (0.7 m) / k
       bloom->stat.capacity = 0.7 * bloom->stat.elements / hashes;
       bloom->stat.e = powf (2.0, (float) -1 * hashes);
-    }
-  else
-    {
+  } else {
       bloom->stat.capacity = capacity;
       bloom->stat.e = error_rate;
-    }
+  }
 
 #ifdef DEBUG
   fprintf (stderr, "bloom_init(%lld,%d) => (%lld,%d) =>%f\n",
@@ -179,6 +141,7 @@ bloom_test (bloom * bloom, char *str, size_t len, int mode)
   hit = 1;
   for (i = 0; i < bloom->stat.ideal_hashes; i++) {
 
+      printf("Bloom hashing: %s, idealhash: %d\n", str, bloom->stat.ideal_hashes);
       ret = bloom_hash (bloom, str, i, bloom->k_mer);
 
       if (!test (bloom->vector, ret)) {
@@ -326,7 +289,7 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
     sizeof (int) * (bl->stat.ideal_hashes + 1);
 
   // Write header?
-  if (fwrite(bl->vector, total_size, 1, fd) <= 0) {
+  if (fwrite(bl, sizeof(bloom), 1, fd) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
   };
@@ -354,7 +317,6 @@ load_bloom (char *filename, bloom *bl)
   FILE* fd;
   int ret;
   
-  BIGNUM off = 0;
   BIGNUM total_size = (long long) ((bl->stat.elements / 8) + 1) * sizeof(char);
 
 #ifdef DEBUG

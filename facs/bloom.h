@@ -97,10 +97,8 @@ extern double get_sigma (BIGNUM num_hit, double prob);
 extern double get_evalue (BIGNUM number, double mu, double sigma);
 extern BIGCAST get_filesize (char *filename);
 
-//XXX: why are there two bloom init functions?
 extern int bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity,
-		       double error_rate, int hashes, hash_t hash, int flags);
-extern void init_bloom (bloom * bl, BIGNUM capacity, float error_rate, int k_mer, char *filename);
+		       double error_rate, int hashes, hash_t hash);
 
 extern int bloom_check (bloom * bloom, char *str, size_t len);
 extern int bloom_add (bloom * bloom, char *str, size_t len);
@@ -112,21 +110,16 @@ extern int finder (BIGNUM index, deref * dr);
 extern int set (char *big, BIGNUM index);
 extern int test (char *big, BIGNUM index);
 extern BIGNUM bloom_hash (bloom * bloom, char *str, int i, int length);
-extern int bloom_hash_old (bloom * bloom, char *str, int i);
 
 extern BIGNUM find_close_prime (BIGNUM m);
-extern int get_suggestion (struct bloomstat *stats, BIGNUM n, double e);
 extern int kmer_suggestion (BIGCAST size);
 extern float mco_suggestion (int k_mer);
 extern int is_prime (BIGNUM m);
-extern void get_rec (struct bloomstat *stat);
 extern BIGNUM report_capacity (bloom * bloom);
 
 extern void write_result (char *filename, char *detail);
 extern void build_help (void);
 extern void check_help (void);
-extern void remove_help (void);
-extern void remove_l_help (void);
 extern int save_bloom (char *filename, bloom * bl, char *prefix,
 		       char *target);
 extern int load_bloom (char *filename, bloom * bl);

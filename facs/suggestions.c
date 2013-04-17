@@ -1,17 +1,19 @@
+#define MB 1048576
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "bloom.h"
-#include "prob.h"
-/*------------------------------*/
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#define MB 1048576
 
+#include "bloom.h"
+#include "prob.h"
+#include "suggestions.h"
 
 double
 get_mu (BIGNUM num_hit, double prob)
@@ -31,42 +33,32 @@ get_evalue (BIGNUM number, double mu, double sigma)
   return cdf (number, mu, sigma);
 }
 
-/*
-float get_probability (BIGCAST hits, BIGCAST total, int k_mer)
+int
+get_suggestion(struct bloomstat *stats, BIGNUM capacity, double err_rate)
 {
-double times = (double)total/(100*MB);
-double prob = 0;
-int rand_hit = 0;
-//((k_mer/3)==0)&&(k_mer=k_mer,1)||(k_mer-(k_mer%3));
-switch (k_mer)
-{
-  case 9:
-  rand_hit = 10;
-  break;
-  case 12:
-  rand_hit = 20;
-  break;
-  case 15:
-  rand_hit = 40;
-  break;
-  case 18:
-  rand_hit = 80;
-  break;
-  case 21:
-  rand_hit = 100;
-  break;
-  default:
-  printf ("cant handle this k_mer so far\n");
-  exit(-1);
-}
-prob = (double)hits/times;
-if (prob<rand_hit)
-    return 0;
-else
-    return hits/total; 
-}
-*/
+  stats->capacity = capacity;
+  stats->e = err_rate;
 
+  /*
+   * Given the desired capacity and error rate, calculate the appropriate value
+   * for number of hash functions and size of array
+   */
+
+  /* assuming perfect number of cells, k directly depends on e */
+  stats->ideal_hashes = (int) log (stats->e) / log (0.5);
+  stats->elements = find_close_prime ((BIGNUM) 13 * stats->capacity
+                   *
+                   (BIGNUM) stats->ideal_hashes / (BIGNUM) 9);
+  /*
+     recalculate k with the actual m, not the ideal 
+     wouldn't need to if it wasn't prime, but that causes problems
+     for hash algs
+   */
+
+  stats->ideal_hashes = 9 * stats->elements / (13 * stats->capacity);
+  
+  return 0;
+}
 
 int
 kmer_suggestion (BIGCAST size)
@@ -129,16 +121,6 @@ mco_suggestion (int k_mer)
     }
 }
 
-int
-get_suggestion (struct bloomstat *stats, BIGNUM n, double e)
-{
-  stats->capacity = n;
-  stats->e = e;
-  get_rec (stats);
-
-  return 0;
-}
-
 BIGNUM
 find_close_prime (BIGNUM m)
 {
@@ -150,26 +132,6 @@ find_close_prime (BIGNUM m)
       m += 2;
     }
   return m;
-}
-
-/*
-Given the desired capacity and error rate, calculate the appropriate values
-for number of hash functions and size of array
-*/
-void
-get_rec (struct bloomstat *stat)
-{
-  /* assuming perfect number of cells, k directly depends on e */
-  stat->ideal_hashes = (int) log (stat->e) / log (0.5);
-  stat->elements =
-    find_close_prime ((BIGNUM) 13 * stat->capacity *
-		      (BIGNUM) stat->ideal_hashes / (BIGNUM) 9);
-  /*
-     recalculate k with the actual m, not the ideal 
-     wouldn't need to if it wasn't prime, but that causes problems
-     for hash algs
-   */
-  stat->ideal_hashes = 9 * stat->elements / (13 * stat->capacity);
 }
 
 int

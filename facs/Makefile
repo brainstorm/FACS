@@ -5,7 +5,7 @@ UNAME := $(shell uname)
 ifneq ($(UNAME), Darwin)
 LIBS=-lm -lz -fopenmp 
 else
-CFLAGS=-Wno-unknown-pragmas -Wno-unused-value -arch x86_64
+CFLAGS+=-Wno-unknown-pragmas -Wno-unused-value -arch x86_64
 LIBS=-lz
 endif
 
@@ -41,4 +41,4 @@ ${PROG}:lib${PROG}.a $(AOBJS) main.o
 lib${PROG}.a:$(LOBJS)
 		$(AR) -csru $@ $(LOBJS)
 
-main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h
+main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h prob.h suggestions.h

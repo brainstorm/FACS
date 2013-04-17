@@ -13,6 +13,7 @@
 #include "bloom.h"
 #include "file_dir.h"
 #include "tool.h"
+#include "suggestions.h"
 
 //@lh3 FASTA/FASTQ reading magic
 #include <zlib.h>
@@ -41,8 +42,6 @@ build_main (int argc, char **argv)
 {
   if (argc < 2)
     build_usage ();
-
-  BIGNUM capacity;
 
   int opt;
   int k_mer = 0;
@@ -85,7 +84,6 @@ build_main (int argc, char **argv)
 }
 
 
-
 int
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
 {
@@ -94,18 +92,28 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
 
   bloom *bl = NEW (bloom);
 
+  // Fill bloom filter structure with parameters
+  bl->stat.e = error_rate;
+  bl->dx = dx_add(bl->k_mer);
+
+  // XXX
+  bl->stat.capacity = 530;
+  
   if (k_mer != 0)
     bl->k_mer = k_mer;
   else
     bl->k_mer = kmer_suggestion (get_filesize(ref_name));
 
-  bl->stat.e = error_rate;
-  bl->dx = dx_add(bl->k_mer);
-  bl->stat.capacity = get_filesize(ref_name);
-  get_rec(&bl->stat);
+  get_suggestion(&bl->stat, bl->stat.capacity, error_rate);
+
+  printf ("Capacity: %lld\n", bl->stat.capacity);
+  printf ("Vector size: %lld\n", bl->stat.elements);
+  printf ("Ideal hashes: %d\n", bl->stat.ideal_hashes);
+  printf ("Error rate: %f\n", bl->stat.e);
+  printf ("Real size: %lld\n", bl->stat.elements / 8);
 
   bloom_init(bl, bl->stat.elements, bl->stat.capacity,
-             bl->stat.e, bl->stat.ideal_hashes, NULL, 3);
+             bl->stat.e, bl->stat.ideal_hashes, NULL);
 
   // Files or stdin input
   if(!ref_name)
