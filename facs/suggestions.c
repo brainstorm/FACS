@@ -34,9 +34,8 @@ get_evalue (BIGNUM number, double mu, double sigma)
 }
 
 int
-get_suggestion(struct bloomstat *stats, BIGNUM capacity, double err_rate)
+get_suggestion(struct bloomstat *stats, double err_rate)
 {
-  stats->capacity = capacity;
   stats->e = err_rate;
 
   /*
@@ -50,9 +49,9 @@ get_suggestion(struct bloomstat *stats, BIGNUM capacity, double err_rate)
                    *
                    (BIGNUM) stats->ideal_hashes / (BIGNUM) 9);
   /*
-     recalculate k with the actual m, not the ideal 
-     wouldn't need to if it wasn't prime, but that causes problems
-     for hash algs
+   * recalculate k with the actual m, not the ideal 
+   * wouldn't need to if it wasn't prime, but that causes problems
+   * for hash algs
    */
 
   stats->ideal_hashes = 9 * stats->elements / (13 * stats->capacity);

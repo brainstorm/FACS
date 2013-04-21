@@ -95,7 +95,6 @@ BIGNUM mkprime (BIGNUM startval);
 extern double get_mu (BIGNUM num_hit, double prob);
 extern double get_sigma (BIGNUM num_hit, double prob);
 extern double get_evalue (BIGNUM number, double mu, double sigma);
-extern BIGCAST get_filesize (char *filename);
 
 extern int bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity,
 		       double error_rate, int hashes, hash_t hash);

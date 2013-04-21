@@ -28,6 +28,9 @@ int
 bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
 	    int hashes, hash_t hash)
 {
+  bloom->inserts = 0;
+  bloom->vector = NULL;
+  
   if (size < 1) {
       fprintf (stderr, "overflow1\n");
       return -1;
@@ -43,7 +46,6 @@ bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
       fprintf (stderr, "hashes was %d,size %lld\n", hashes, size);
 #endif
       return -1;
-
   } else {
       bloom->stat.ideal_hashes = hashes;
   }
@@ -54,21 +56,19 @@ bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
       bloom->hash = hash;
   }
 
-  bloom->inserts = 0;
-
+//XXX
 	/**
 	If error rate and capacity were not specified, but size and num hashes were,
 	we can calculate the missing elements.
-	**/
   if (capacity == 0 || error_rate == 0) {
       // From wikipedia, num hashes k that minimizes probability of error is k =~ (0.7 m) / n
       // Therefore n =~ (0.7 m) / k
       bloom->stat.capacity = 0.7 * bloom->stat.elements / hashes;
       bloom->stat.e = powf (2.0, (float) -1 * hashes);
   } else {
+	**/
       bloom->stat.capacity = capacity;
       bloom->stat.e = error_rate;
-  }
 
 #ifdef DEBUG
   fprintf (stderr, "bloom_init(%lld,%d) => (%lld,%d) =>%f\n",
@@ -76,33 +76,21 @@ bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
 	   bloom->stat.ideal_hashes, bloom->stat.e);
 #endif
 
-  if ((size > TOPLIMIT))
-    {
+  if ((size > TOPLIMIT)) {
       fprintf (stderr, "overflow2\n");
       return -2;
-    }
+  }
 
   /* allocate our array of bytes.  where m is the size of our desired 
    * bit vector, we allocate m/8 + 1 bytes. */
-  if ((bloom->vector = (char *) malloc (sizeof (char) *
+/*  if ((bloom->vector = (char *) malloc (sizeof (char) *
 					((long long) (bloom->stat.elements /
 						      8) + 1))) == NULL)
     {
       perror ("malloc");
       return -1;
     }
-  else
-    memset (bloom->vector, 0,
-	    sizeof (char) * ((long long) (bloom->stat.elements / 8) + 1));
-
-  /* generate a collection of random integers, to use later
-   * when salting our keys before hashing them */
-
-  //sketchy_randoms(&bloom->random_nums,hashes);
-  //bloom->vector = "11111111";
-  //printf("vector size-> %d\n",sizeof(bloom->vector));
-  //memset(bloom->vector,0,sizeof(bloom->vector));
-
+  */
   return 0;
 }
 
@@ -140,8 +128,9 @@ bloom_test (bloom * bloom, char *str, size_t len, int mode)
    * and hash it into the bit vector */
   hit = 1;
   for (i = 0; i < bloom->stat.ideal_hashes; i++) {
-
+#ifdef DEBUG
       printf("Bloom hashing: %s, idealhash: %d\n", str, bloom->stat.ideal_hashes);
+#endif
       ret = bloom_hash (bloom, str, i, bloom->k_mer);
 
       if (!test (bloom->vector, ret)) {
@@ -182,6 +171,7 @@ set (char *big, BIGNUM index)
 int
 test (char *big, BIGNUM index)
 {
+  printf("DEREF: %s, %lld\n", big, index);
   deref dr;
   char bucket;
 
@@ -408,16 +398,5 @@ rev_trans (char *s)
           break;
       }
       s++;
-  }
-}
-
-BIGCAST
-get_filesize (char *filename)
-{
-  struct stat buf;
-  if (stat (filename, &buf) != -1){
-    return buf.st_size;
-  }else{
-    return 0;
   }
 }

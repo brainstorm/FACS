@@ -91,21 +91,24 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   kseq_t *seq = NULL;
 
   bloom *bl = NEW (bloom);
+  BIGNUM reference_size = get_filesize(ref_name);
 
   // Fill bloom filter structure with parameters
   bl->stat.e = error_rate;
-  bl->dx = dx_add(bl->k_mer);
-
-  // XXX
-  bl->stat.capacity = 530;
+  //bl->dx = dx_add(bl->k_mer);
+  // Sum(k_mer)
+  bl->dx = (bl->k_mer * (bl->k_mer+1))/2;
+  bl->stat.capacity = reference_size;
   
   if (k_mer != 0)
     bl->k_mer = k_mer;
   else
-    bl->k_mer = kmer_suggestion (get_filesize(ref_name));
+    bl->k_mer = kmer_suggestion (reference_size);
 
-  get_suggestion(&bl->stat, bl->stat.capacity, error_rate);
+  get_suggestion(&bl->stat, error_rate);
 
+  printf ("Kmer size: %lld\n", bl->k_mer);
+  printf ("Reference filesize: %lld\n", reference_size);
   printf ("Capacity: %lld\n", bl->stat.capacity);
   printf ("Vector size: %lld\n", bl->stat.elements);
   printf ("Ideal hashes: %d\n", bl->stat.ideal_hashes);
@@ -131,7 +134,7 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
     // adding k_mers to a bloom filter via sliding window.
     cur = 0;
     while (cur <= (seq->seq.l - bl->k_mer)) {
-        //printf("%s\n", strndup(seq->seq.s + cur, bl->k_mer));
+        printf("%s\n", strndup(seq->seq.s + cur, bl->k_mer));
         bloom_add(bl, strndup(seq->seq.s + cur, bl->k_mer), bl->k_mer);
         cur++;
     }

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <limits.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
@@ -338,3 +339,15 @@ substr(const char* str, size_t begin, size_t len)
 		return 0; 
 	return strndup(str + begin, len); 
 } 
+
+BIGCAST
+get_filesize (char* filename)
+{
+  struct stat buf;
+  if (stat (filename, &buf) != -1){
+    return buf.st_size;
+  }else{
+	fprintf (stderr, "%s: %s\n", filename, strerror(errno));
+	exit(EXIT_FAILURE);
+  }
+}

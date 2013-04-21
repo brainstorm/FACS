@@ -14,5 +14,5 @@ extern int query_read(char *begin, int length, char model, bloom * bl, float tol
 void isodate(char* buf);
 char* report(F_set * File_head, char* query, char* fmt, char* prefix);
 char* substr(const char* str, size_t begin, size_t len);
-
+BIGCAST get_filesize (char *filename);
 #endif
