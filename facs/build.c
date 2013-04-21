@@ -133,8 +133,10 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   while (kseq_read(seq) >= 0) {
     // adding k_mers to a bloom filter via sliding window.
     cur = 0;
+    printf("Loop condition: %d\n", seq->seq.l - bl->k_mer);
     while (cur <= (seq->seq.l - bl->k_mer)) {
-        printf("%s\n", strndup(seq->seq.s + cur, bl->k_mer));
+        //printf("%s\n", strndup(seq->seq.s + cur, bl->k_mer));
+    	//printf("%d\n", cur);
         bloom_add(bl, strndup(seq->seq.s + cur, bl->k_mer), bl->k_mer);
         cur++;
     }

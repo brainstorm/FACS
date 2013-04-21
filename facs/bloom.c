@@ -83,14 +83,13 @@ bloom_init (bloom * bloom, BIGNUM size, BIGNUM capacity, double error_rate,
 
   /* allocate our array of bytes.  where m is the size of our desired 
    * bit vector, we allocate m/8 + 1 bytes. */
-/*  if ((bloom->vector = (char *) malloc (sizeof (char) *
+  if ((bloom->vector = (char *) malloc (sizeof (char) *
 					((long long) (bloom->stat.elements /
 						      8) + 1))) == NULL)
     {
       perror ("malloc");
       return -1;
     }
-  */
   return 0;
 }
 
@@ -171,7 +170,6 @@ set (char *big, BIGNUM index)
 int
 test (char *big, BIGNUM index)
 {
-  printf("DEREF: %s, %lld\n", big, index);
   deref dr;
   char bucket;
 
