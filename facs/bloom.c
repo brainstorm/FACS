@@ -131,7 +131,7 @@ bloom_test (bloom * bloom, char *str, size_t len, int mode)
       printf("Bloom hashing: %s, idealhash: %d\n", str, bloom->stat.ideal_hashes);
 #endif
       ret = bloom_hash (bloom, str, i, bloom->k_mer);
-
+// XXX: Illegal memory access
       if (!test (bloom->vector, ret)) {
           hit = 0;
           if (mode == SET) {

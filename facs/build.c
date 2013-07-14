@@ -53,16 +53,16 @@ build_main (int argc, char **argv)
   while ((opt = getopt (argc, argv, "e:k:o:r:h")) != -1) {
       switch (opt) {
         case 'e':
-          (optarg) && (error_rate = atof (optarg), 1);
+          error_rate = atof(optarg);
           break;
         case 'k':
-          (optarg) && (k_mer = atoi (optarg), 1);
+          k_mer = atoi(optarg);
           break;
         case 'o':
-          (optarg) && (bloom_file = optarg, 1);
+          bloom_file = optarg;
           break;
         case 'r':
-          (optarg) && (reference = optarg, 1);
+          reference = optarg;
           break;
         case 'h':
           return build_usage ();
@@ -107,7 +107,7 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
 
   get_suggestion(&bl->stat, error_rate);
 
-  printf ("Kmer size: %lld\n", bl->k_mer);
+  printf ("Kmer size: %d\n", bl->k_mer);
   printf ("Reference filesize: %lld\n", reference_size);
   printf ("Capacity: %lld\n", bl->stat.capacity);
   printf ("Vector size: %lld\n", bl->stat.elements);
@@ -133,7 +133,7 @@ build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *pre
   while (kseq_read(seq) >= 0) {
     // adding k_mers to a bloom filter via sliding window.
     cur = 0;
-    printf("Loop condition: %d\n", seq->seq.l - bl->k_mer);
+    printf("Loop condition: %ld\n", seq->seq.l - bl->k_mer);
     while (cur <= (seq->seq.l - bl->k_mer)) {
         //printf("%s\n", strndup(seq->seq.s + cur, bl->k_mer));
     	//printf("%d\n", cur);
