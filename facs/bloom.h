@@ -119,9 +119,9 @@ extern BIGNUM report_capacity (bloom * bloom);
 extern void write_result (char *filename, char *detail);
 extern void build_help (void);
 extern void check_help (void);
-extern int save_bloom (char *filename, bloom * bl, char *prefix,
+extern size_t save_bloom (char *filename, bloom * bl, char *prefix,
 		       char *target);
-extern int load_bloom (char *filename, bloom * bl);
+extern size_t load_bloom (char *filename, bloom * bl);
 extern void rev_trans (char *s);
 
 extern char *prefix_make (char *filename, char *prefix, char *target);

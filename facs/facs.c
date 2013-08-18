@@ -46,21 +46,22 @@ facs_bloom_query(PyObject * self, PyObject * args)
   double tole_rate = 0;
   char *qry, *bloom;
   char* report_fmt = "json";
-  int ret;
+  char* ret;
 
   if (!PyArg_ParseTuple(args, "ss|dds", &qry, &bloom, 
                         &tole_rate, &sampling_rate, report_fmt))
     return NULL;
+
   ret = query(qry, bloom, tole_rate, sampling_rate, NULL, NULL, report_fmt);
 
-  return Py_BuildValue("i", ret);
+  return Py_BuildValue("s", ret);
 }
 
 static PyObject *
 facs_bloom_build(PyObject * self, PyObject * args)
 {
   char *source, *bloom_filter, *prefix;
-  int ret;
+  char* ret = NULL;
 
   //FACS operational defaults
   int k_mer = 0;
@@ -81,7 +82,7 @@ facs_bloom_remove(PyObject * self, PyObject * args)
 {
   double tole_rate = 0;
   char *src, *ref, *list, *prefix;
-  int ret;
+  char* ret = NULL;
 
   if (!PyArg_ParseTuple
       (args, "ss|ssd", &src, &ref, &list, &prefix, &tole_rate))
@@ -90,5 +91,5 @@ facs_bloom_remove(PyObject * self, PyObject * args)
   //TODO: Reimplement properly
   //ret = remove_reads(src, ref, NULL, NULL, tole_rate);
 
-  return Py_BuildValue ("i", ret);
+  return Py_BuildValue ("s", ret);
 }

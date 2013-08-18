@@ -37,7 +37,7 @@ build_usage (void)
   return 1;
 }
 
-int
+char*
 build_main (int argc, char **argv)
 {
   if (argc < 2)
@@ -65,10 +65,12 @@ build_main (int argc, char **argv)
           reference = optarg;
           break;
         case 'h':
-          return build_usage ();
+          build_usage ();
+          return NULL;
         default:
           printf ("Unknown option: -%c\n", (char) optopt);
-          return build_usage ();
+          build_usage ();
+          return NULL;
 	  }
   }
 
@@ -76,15 +78,15 @@ build_main (int argc, char **argv)
   // XXX create same input filename but with ".bloom" extension?
   if (!bloom_file) {
       fprintf(stderr, "error: No bloom file supplied (use -o)\n");
-      return build_usage();
+      build_usage();
+      return NULL;
   }
 
-  build (reference, bloom_file, k_mer, error_rate, NULL);
-  return 0;
+  return build(reference, bloom_file, k_mer, error_rate, NULL);
 }
 
 
-int
+char*
 build (char *ref_name, char *bloom_file, int k_mer, double error_rate, char *prefix)
 {
   gzFile fp;

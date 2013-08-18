@@ -121,8 +121,9 @@ bloom_add (bloom * bloom, char *str, size_t len)
 int
 bloom_test (bloom * bloom, char *str, size_t len, int mode)
 {
-  int i, hit;
-  BIGNUM ret;
+  int i = 0;
+  int hit = 0;
+  BIGNUM ret = 0;
   /* as many times as our ideal hash count dictates, salt our key
    * and hash it into the bit vector */
   hit = 1;
@@ -131,7 +132,6 @@ bloom_test (bloom * bloom, char *str, size_t len, int mode)
       printf("Bloom hashing: %s, idealhash: %d\n", str, bloom->stat.ideal_hashes);
 #endif
       ret = bloom_hash (bloom, str, i, bloom->k_mer);
-// XXX: Illegal memory access
       if (!test (bloom->vector, ret)) {
           hit = 0;
           if (mode == SET) {
@@ -151,6 +151,8 @@ bloom_hash (bloom * bloom, char *str, int i, int length)
 {
   BIGNUM ret = 0;
 
+  //XXX
+  printf("%d\n", i);
   ret = (BIGNUM) hash5 (str, seed[i], length) % (BIGNUM) bloom->stat.elements;
 
   return ret;
@@ -187,6 +189,7 @@ int
 finder (BIGNUM index, deref * dr)
 {
 
+  printf("fooo\n%lld", index);
   //dr->index = (BIGNUM) (index / 8);
   //dr->spot = 1<<(2, (index % 8));
   dr->index = (BIGNUM) (index >> 3);
@@ -242,11 +245,11 @@ prefix_make (char *filename, char *prefix, char *target)
   return bloom_file;
 }
 
-int
+size_t
 save_bloom (char *filename, bloom *bl, char *prefix, char *target)
 {
   FILE* fd;
-  int ret = 0;
+  size_t size = 0;
   
   char *bloom_file = NULL;
   BIGNUM total_size = 0;
@@ -279,7 +282,7 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
     sizeof (int) * (bl->stat.ideal_hashes + 1);
 
   // Write bloom metadata/headers first
-  if ((ret = fwrite(bl, sizeof(bloom), 1, fd)) <= 0) {
+  if ((size = fwrite(bl, sizeof(bloom), 1, fd)) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
   };
@@ -287,7 +290,7 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
   // Write the bit vector itself
   total_size = stat_elems;
   
-  if ((ret = fwrite(bl->vector, total_size, 1, fd)) <= 0) {
+  if ((size = fwrite(bl->vector, total_size, 1, fd)) <= 0) {
       fprintf(stderr, "%s: %s\n", bloom_file, strerror(errno));
       exit(EXIT_FAILURE);
   };
@@ -298,14 +301,14 @@ save_bloom (char *filename, bloom *bl, char *prefix, char *target)
 #ifdef DEBUG
   printf ("Bloom filter file written in: %s\n", bloom_file);
 #endif
-  return ret;
+  return size;
 }
 
-int
+size_t
 load_bloom (char *filename, bloom *bl)
 {
   FILE* fd;
-  int ret;
+  size_t ret;
   
   BIGNUM total_size = (long long) ((bl->stat.elements / 8) + 1) * sizeof(char);
 
@@ -368,7 +371,7 @@ rev_trans (char *s)
 
   i = 0;
 
-  while (i < strlen (s)) {
+  while (i < (int)strlen (s)) {
       switch (s[i]) {
         case 'A':
           s[0] = 'T';

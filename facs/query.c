@@ -37,11 +37,13 @@ query_usage (void)
   return 1;
 }
 
-int
+char*
 bq_main (int argc, char **argv)
 {
-  if (argc < 3)
-    return query_usage ();
+  if (argc < 3) {
+    query_usage();
+    return NULL;
+  }
 
   int opt;
   double tole_rate = 0;
@@ -78,10 +80,12 @@ bq_main (int argc, char **argv)
 	  (optarg) && (report_fmt = optarg, 1);
 	  break;
 	case 'h':
-	  return query_usage ();
+	  query_usage();
+      return NULL;
 	case '?':
-	  printf ("Unknown option: -%c\n", (char) optopt);
-	  return query_usage ();
+	  printf("Unknown option: -%c\n", (char) optopt);
+	  query_usage();
+      return NULL;
 	}
   }
 
@@ -89,13 +93,12 @@ bq_main (int argc, char **argv)
                target_path, report_fmt);
 }
 
-int
-query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
-       char *list, char *target_path, char *report_fmt)
+char*
+query (char *query, char *bloom_filter, double tole_rate, double sampling_rate, char *list, char *target_path, char *report_fmt)
 {
   /* 
    * TODO: Implement sampling
-   *       OpenMP it
+   *       Put OpenMP back
    */
 
   gzFile fp;
@@ -103,6 +106,7 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
 
   int read = 0;
   char* read_qry = NULL;
+  char* res = NULL;
   
   bloom *bl = NEW (bloom);
   F_set *File_head = make_list (bloom_filter, list);
@@ -149,11 +153,11 @@ query (char *query, char *bloom_filter, double tole_rate, double sampling_rate,
     }
   }
 
-  fprintf(stdout, report(File_head, query, report_fmt, target_path));
+  res = report(File_head, query, report_fmt, target_path);
 
   kseq_destroy(seq);
   gzclose(fp);
   bloom_destroy(bl);
 
-  return 0;
+  return res;
 }

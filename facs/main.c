@@ -35,7 +35,7 @@ usage (void)
 int
 main (int argc, char **argv)
 {
-  int ret = 0;
+  char* ret = 0;
 
   if (argc < 2)
     return usage ();
@@ -50,5 +50,5 @@ main (int argc, char **argv)
 //    ret = remove_l_main (argc-1, argv+1);
   else
     usage();
-  return ret;
+  return 0;
 }
