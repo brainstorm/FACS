@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import glob
 import shutil
 import sys
 import subprocess
@@ -21,7 +22,16 @@ class SimNGSTest(unittest.TestCase):
         self.synthetic_fastq = os.path.join(os.path.dirname(__file__), "data", "synthetic_fastq")
         self.tmp = os.path.join(os.path.dirname(__file__), "data", "tmp")
 
+        helpers._mkdir_p(self.data_dir)
+        helpers._mkdir_p(self.progs)
+        helpers._mkdir_p(self.reference)
+        helpers._mkdir_p(self.bloom_dir)
+        helpers._mkdir_p(self.custom_dir)
+        helpers._mkdir_p(self.synthetic_fastq)
+        helpers._mkdir_p(self.tmp)
+
         self.simngs_url = 'http://www.ebi.ac.uk/goldman-srv/simNGS/current/simNGS.tgz'
+        self.sim_reads = 100
 
     def test_1_fetch_simNGS(self):
         """ Downloads and installs simNGS locally
@@ -36,27 +46,33 @@ class SimNGSTest(unittest.TestCase):
             os.chdir("src")
             subprocess.check_call(["make"])
 
-        shutil.move(simngs, self.progs)
-        shutil.move(simlib, self.progs)
-        shutil.move(runfile, self.progs)
+        helpers._move_p(simngs, self.progs)
+        helpers._move_p(simlib, self.progs)
+        helpers._move_p(runfile, self.progs)
 
     def test_2_run_simNGS(self):
         """ Generates a synthetic library and runs with built-in simNGS runfile
         """
-        reads = "100"
+        reads = self.sim_reads
         simngs = os.path.join(self.progs, "simNGS")
         simlib = os.path.join(self.progs, "simLibrary")
+
+        # Default Illumina error profiles for simNGS
         runfile = os.path.join(self.progs, "s_3_4x.runfile")
-        ecoli = os.path.join(self.reference, "eschColi_K12", "seq", "eschColi_K12.fa")
-        dst = os.path.join(self.synthetic_fastq, "simngs_{reads}.fastq".format(reads=reads))
 
-        #http://docs.python.org/2/library/subprocess.html#replacing-shell-pipeline
-        cl1 = [simlib, "-n", reads, ecoli]
-        cl2 = [simngs, "-o", "fastq", "-p", "paired", runfile]
-        p1 = subprocess.Popen(cl1, stdout=subprocess.PIPE)
-        p2 = subprocess.Popen(cl2, stdin=p1.stdout, stdout=subprocess.PIPE)
-        p1.stdout.close()
+        # Generate N simulated reads of every organism present in "org"
+        orgs = [o for o in glob.glob(os.path.join(self.reference, "*/seq/*.fa"))]
 
-        with open(dst, 'w') as fh:
-            fh.write(p2.communicate()[0])
-            fh.close()
+        for org in orgs:
+            dst = os.path.join(self.synthetic_fastq,
+                               "simngs_{org}_{reads}.fastq".format(org=org.split(os.sep)[-3], reads=reads))
+
+            with open(dst, 'w') as fh:
+                # Spikes a single ecoli read into all synthetically generated reads
+                cl1 = [simlib, "-n", str(reads), org]
+                cl2 = [simngs, "-o", "fastq", "-p", "paired", runfile]
+
+                # http://docs.python.org/2/library/subprocess.html#replacing-shell-pipeline
+                p1 = subprocess.Popen(cl1, stdout=subprocess.PIPE)
+                p2 = subprocess.Popen(cl2, stdin=p1.stdout, stdout=fh).communicate()
+                p1.stdout.close()

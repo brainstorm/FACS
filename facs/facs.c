@@ -46,14 +46,16 @@ facs_bloom_query(PyObject * self, PyObject * args)
   double sampling_rate = 1;
   double tole_rate = 0;
   char *qry, *bloom;
-  int ret;
+  char* report_fmt = "json";
+  char* ret;
 
-  if (!PyArg_ParseTuple(args, "ss|dd", &qry, &bloom, 
-                        &tole_rate, &sampling_rate))
+  if (!PyArg_ParseTuple(args, "ss|dds", &qry, &bloom, &tole_rate, &sampling_rate, report_fmt))
     return NULL;
-  ret = query(qry, bloom, tole_rate, sampling_rate, NULL, NULL);
+  ret = query(qry, bloom, tole_rate, sampling_rate, NULL, NULL, report_fmt,'c');
 
-  return Py_BuildValue("i", ret);
+  printf("%s\n", ret);
+
+  return Py_BuildValue("s", ret);
 }
 
 static PyObject *
@@ -81,13 +83,15 @@ facs_bloom_remove(PyObject * self, PyObject * args)
 {
   double tole_rate = 0;
   char *src, *ref, *list, *prefix;
-  int ret;
+  char *report_fmt = "json";
+  char *ret;
 
   if (!PyArg_ParseTuple
       (args, "ss|ssd", &src, &ref, &list, &prefix, &tole_rate))
     return NULL;
 
-  ret = remove_reads(src, ref, NULL, NULL, tole_rate);
-
+  //ret = remove_reads(src, ref, NULL, NULL, tole_rate);
+  ret = query(src, ref, tole_rate, 1.000,  NULL, NULL, report_fmt , 'r');
+  printf("%s\n",ret);
   return Py_BuildValue ("i", ret);
 }

@@ -8,7 +8,7 @@ import contextlib
 import collections
 
 import facs
-from facs.utils import helpers, galaxy
+from facs.utils import helpers, galaxy, config
 from nose.plugins.attrib import attr
 
 @attr('standard')
@@ -40,36 +40,57 @@ class FacsBasicTest(unittest.TestCase):
         # Downloads reference genome(s)
         galaxy.rsync_genomes(self.reference, ["phix", "dm3", "ecoli"], ["ucsc"], twobit_fa_path)
 
+        # Collates results from all tests for later bulk reporting.
+        # This way runtime is not biased by connection delays.
+        self.results = []
+
+
+    def tearDown(self):
+        """ Report collated results of the tests to a remote CouchDB database.
+        """
+        try:
+            for res in self.results:
+                if config.SERVER:
+                    helpers.send_couchdb(config.SERVER, config.FACS_DB, config.USERNAME, config.PASSWORD, res)
+        except:
+            pass
+
     def test_1_build_ref(self):
         """ Build bloom filters out of the reference genomes directory.
         """
-        for ref in os.listdir(self.reference):
+	for ref in os.listdir(self.reference):
             org = os.path.join(self.reference, ref, "seq", ref+".fa")
             bf = os.path.join(self.bloom_dir, os.path.splitext(ref)[0]+".bloom")
             print(org, bf)
             if not os.path.exists(bf):
-                facs.build(org, bf)
+                json_doc = facs.build(org, bf)
+                self.results.append(json_doc)
 
-    def test_2_query(self):
-        """ Generate dummy fastq files and query them against reference bloom filters.
-        """
-        for nreads in self.fastq_nreads:
-            test_fname = "test%s.fastq" % nreads
-            helpers.generate_dummy_fastq(os.path.join(self.synthetic_fastq,
-                                                      test_fname), nreads)
-
-        for ref in os.listdir(self.reference):
-            qry = os.path.join(self.synthetic_fastq, test_fname)
-            bf = os.path.join(self.bloom_dir, os.path.splitext(ref)[0]+".bloom")
-            print(qry, bf)
-    	    facs.query(qry, bf)
+#    def test_2_query(self):
+#        """ Generate dummy fastq files and query them against reference bloom filters.
+#        """
+#        for nreads in self.fastq_nreads:
+#            for case in ['','_lowercase']:
+#                test_fname = "test%s%s.fastq" % (nreads, case)
+#                helpers.generate_dummy_fastq(os.path.join(self.synthetic_fastq,
+#                                                          test_fname), nreads, case)
+#
+#        for sample in glob.glob(os.path.join(self.synthetic_fastq, "*.fastq")):
+#            for ref in os.listdir(self.reference):
+#                qry = os.path.join(self.synthetic_fastq, sample)
+#                bf = os.path.join(self.bloom_dir, os.path.splitext(ref)[0]+".bloom")
+#                print(qry, bf)
+#                json_doc = facs.query(qry, bf)
+#                self.results.append(json_doc)
 
     def test_3_query_custom(self):
         """ Query against the uncompressed FastQ files files manually deposited
             in data/custom folder.
         """
         for sample in glob.glob(os.path.join(self.custom_dir, "*.fastq")):
-            print "\nQuerying against uncompressed sample %s" % sample
+            print "\nQuerying custom sample %s" % sample
             for ref in os.listdir(self.reference):
-                facs.query(os.path.join(self.synthetic_fastq, test_fname),
+                json_doc = facs.query(os.path.join(self.synthetic_fastq, sample),
                            os.path.join(self.bloom_dir, os.path.splitext(ref)[0]+".bloom"))
+
+                self.results.append(json_doc)
