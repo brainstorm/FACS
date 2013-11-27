@@ -21,17 +21,17 @@
 
 static int build_usage (void)
 {
-  fprintf (stderr, "\nUsage: ./facs build [options]\n");
+  fprintf (stderr, "\nUsage: facs build [options]\n");
   fprintf (stderr, "Options:\n");
-  fprintf (stderr, "\t-r reference FASTA/FASTQ file\n");
-  fprintf (stderr, "\t-o output bloom filter file\n");
-  fprintf (stderr,
-	   "\t-l text file containing all reference files, will build individual bloom filters for each\n");
-  fprintf (stderr,
-	   "\t-k k-mer size, default is automatically estimated from the reference file\n");
-  fprintf (stderr,
-	   "\t-e allowed false positive frequency, default is 0.005\n");
+  fprintf (stderr, "\t-r <file>  Reference sequence(s) in FASTA/FASTQ format. .\n");
+  fprintf (stderr, "\t-o <file>  Name your output Bloom filter file. Default is to base the name on the reference file.\n");
+  fprintf (stderr, "\t-l <file>  Text file containing a list of reference files, one filename per line. One\n\t           Bloom filter is built for each reference file.\n");
+  fprintf (stderr, "\t-k <int>   Choose word size (k-mer size) for Bloom filter lookups. \n\t           Default: a value chosen based the size of the reference file.\n");
+  fprintf (stderr, "\t-e <float> Allowed false positive frequency in Bloom filter lookups. Default: 0.005\n");
   fprintf (stderr, "\n");
+  fprintf (stderr, "Note that one of '-r' and '-l' has to be used.\n");
+  fprintf (stderr, "\n");
+  fprintf (stderr, "Example:\n\tfacs build -r hsapiens.fa\n");
   return 1;
 }
 
@@ -47,7 +47,6 @@ int build_main (int argc, char **argv)
   float error_rate = 0.0005;
 
   char *list = NULL;
-  char *prefix = NULL;
   char *target_path = NULL;
   char *source = NULL;
   //XXX make -l and -r mutually exclusive
@@ -129,12 +128,11 @@ void init_bloom(bloom *bl, BIGNUM capacity,float error_rate,int k_mer,char *file
   printf ("Real size: %lld\n", bl->stat.elements / 8);
 #endif
   bloom_init (bl, bl->stat.elements, bl->stat.capacity, bl->stat.e, bl->stat.ideal_hashes, NULL, flags);
-  //printf ("k_mer->%d\n", k_mer);
   if (k_mer != 0)
   	bl->k_mer = k_mer;
   else
   	bl->k_mer = kmer_suggestion (get_size (filename));
-  bl->dx = dx_add (bl->k_mer);
+  bl->dx = bl->k_mer*bl->k_mer;
 }
 
 int build (char *ref_name, char *target_path, int k_mer, double error_rate, char *prefix)
@@ -146,7 +144,7 @@ int build (char *ref_name, char *target_path, int k_mer, double error_rate, char
   else
   	bl->k_mer = kmer_suggestion (get_size (ref_name));
   bl->stat.e = error_rate;
-  bl->dx = dx_add (bl->k_mer);
+  bl->dx = bl->k_mer*bl->k_mer;
   bl->stat.capacity = strlen (position);
   get_rec (&bl->stat);
   bloom_init (bl, bl->stat.elements, bl->stat.capacity, bl->stat.e, bl->stat.ideal_hashes, NULL, 3);

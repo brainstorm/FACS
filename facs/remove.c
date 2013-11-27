@@ -17,9 +17,8 @@
 #include "check.h"
 #include "bloom.h"
 #include "remove.h"
-#include "big_query.h"
+#include "query.h"
 #include "file_dir.h"
-#include "big_query.h"
 #ifndef __clang__
 #include<omp.h>
 //#include<mpi.h>
@@ -30,14 +29,16 @@
 static int
 remove_usage (void)
 {
-  fprintf (stderr, "\nUsage: ./facs remove [options]\n");
+  fprintf (stderr, "\nUsage: facs remove [options]\n");
   fprintf (stderr, "Options:\n");
-  fprintf (stderr, "\t-r reference Bloom filter to query against\n");
-  fprintf (stderr, "\t-q FASTA/FASTQ file containing the query\n");
-  fprintf (stderr,
-	   "\t-l input list containing all Bloom filters, one per line\n");
-  fprintf (stderr, "\t-t threshold value\n");
+  fprintf (stderr, "\t-r <file>   Reference Bloom filter to query against\n");
+  fprintf (stderr, "\t-q <file>   FASTA/FASTQ file containing the query reads\n");
+  fprintf (stderr, "\t-l <file>   A file with a list of Bloom filter files, one per line.\n");
+  fprintf (stderr, "\t-t <float>  A threshold value between 0 and 1.0. Default: depends on word size (k), typically 0.4.\n");
   fprintf (stderr, "\n");
+  fprintf (stderr, "Note that one of '-r' and '-l' has to be used.\n");
+  fprintf (stderr, "\n");
+  fprintf (stderr, "Example:\n\tfacs remove -r ecoli.bloom -q reads.fq\n");
   exit (1);
 }
 
@@ -144,8 +145,6 @@ void save_result (char *source, char *obj_file, char type, char *prefix, char *c
   	strcat (match, ".fastq");
   	strcat (mismatch, ".fastq");
   }
-  printf ("match->%s\n", match);
-  printf ("mis->%s\n", mismatch);
   write_result (match, contam2);
   write_result (mismatch, clean2);
   memset(contam2,0,strlen(contam2));
