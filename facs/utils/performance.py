@@ -56,7 +56,21 @@ def facs_vs_fastq_screen_files():
 
                                 delta = dt_e - dt_b
 
-                                print delta.total_seconds()
+                            if fcs.get('begin_timestamp'):
+                                begin_fcs = fcs['begin_timestamp']
+                                end_fcs = fcs['end_timestamp']
+
+                                # remove the messy UTC offset (+0200) (%z does not parse it out)
+                                # http://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
+                                begin_fcs = begin_fcs[:-5]
+                                end_fcs = end_fcs[:-5]
+
+                                dt_b_f = datetime.datetime.strptime( begin_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
+                                dt_e_f = datetime.datetime.strptime( end_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
+
+                                delta_fcs = dt_e_f - dt_b_f
+
+                                print delta.total_seconds(), delta_fcs.total_seconds()
 
 
 
