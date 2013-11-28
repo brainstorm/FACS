@@ -25,7 +25,26 @@ def _fetch_results(couch, database):
     log.info("Fetched %s documents" % str(len(docs)))
     return docs
 
-def facs_vs_fastq_screen_files():
+def facs_vs_deconseq():
+    """ Compare FACS against bwa-based deconseq
+    """
+    facs, deconseq = "", ""
+
+    with open("facs.json") as fh:
+        facs = json.load(fh)
+
+    with open("deconseq.json") as fh:
+        deconseq = json.load(fh)
+
+    for decon in deconseq:
+        if decon.get('sample'):
+            for fcs in facs:
+                if fcs.get('sample') == decon.get('sample'):
+                    print "Parse timing stuff here"
+                else:
+                    print "There are no samples to compare or they ran in different machines"
+
+def facs_vs_fastq_screen():
     """ Work from the json files on disk instead of fetched from DB
     """
     facs, fastq_screen = "", ""
@@ -75,14 +94,17 @@ def facs_vs_fastq_screen_files():
 
 
 
-def facs_vs_fastq_screen():
+def fetch_couchdb_results():
     stream = logbook.StreamHandler(sys.stdout, level=logbook.INFO)
     with stream.applicationbound():
         log.info("Establishing connection with database %s" % config.SERVER)
+
         couch = couchdb.Server(config.SERVER)
         couch.resource.credentials = (config.USERNAME, config.PASSWORD)
+
         facs_results = _fetch_results(couch, config.FACS_DB)
         fastq_screen_results = _fetch_results(couch, config.FASTQ_SCREEN_DB)
+        deconseq_results = _fetch_results(couch, config.DECONSEQ_DB)
 
         with open("facs.json", 'w') as fh:
             json.dump(facs_results, fh)
@@ -90,11 +112,15 @@ def facs_vs_fastq_screen():
         with open("fastq_screen.json", 'w') as fh:
             json.dump(fastq_screen_results, fh)
 
+        with open("deconseq.json", 'w') as fh:
+            json.dump(deconseq_results, fh)
+
 if __name__ == "__main__":
 
     # Fetch CouchDB dumps locally for now
     # iriscouch is not the fastest nor most reliable DB around
     if not glob.glob('*.json'):
-        facs_vs_fastq_screen()
+        fetch_couchdb_results()
 
-    facs_vs_fastq_screen_files()
+    facs_vs_fastq_screen()
+    facs_vs_deconseq()
