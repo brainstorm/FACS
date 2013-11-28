@@ -148,5 +148,8 @@ if __name__ == "__main__":
     if not glob.glob('*.json'):
         fetch_couchdb_results()
 
+    log.info("Comparing runtimes of FACS vs fastq_screen")
     facs_vs_fastq_screen()
+
+    log.info("Comparing runtimes of FACS vs deconseq")
     facs_vs_deconseq()
