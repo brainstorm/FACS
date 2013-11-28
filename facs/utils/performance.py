@@ -5,6 +5,7 @@ Given previous test results stored in an external database (specified in your
 """
 import logbook
 import os
+import glob
 import sys
 import json
 import couchdb
@@ -39,10 +40,10 @@ def facs_vs_fastq_screen_files():
         if fqscr.get('sample'):
             for fcs in facs:
                 if fcs.get('sample'):
-                    # fqscreen stores the full path, facs does not
+                    # fqscreen stores the full path, FACS does not
                     # XXX: We are Actually losing info here since full pathnames
                     # provide information about the system on which a particular
-                    # test ran on.
+                    # test ran on... to be fixed upstream (in FACS report() function).
                     if os.path.basename(fcs['sample']) == fqscr['sample']:
                         # Do not assume the test run went well
                         if len(fqscr['organisms']) > 0:
@@ -60,7 +61,7 @@ def facs_vs_fastq_screen_files():
                                 begin_fcs = fcs['begin_timestamp']
                                 end_fcs = fcs['end_timestamp']
 
-                                # remove the messy UTC offset (+0200) (%z does not parse it out)
+                                # remove the UTC offset (+0200) (%z does not parse it out)
                                 # http://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
                                 begin_fcs = begin_fcs[:-5]
                                 end_fcs = end_fcs[:-5]
@@ -90,6 +91,10 @@ def facs_vs_fastq_screen():
             json.dump(fastq_screen_results, fh)
 
 if __name__ == "__main__":
-    #facs_vs_fastq_screen()
-    facs_vs_fastq_screen_files()
 
+    # Fetch CouchDB dumps locally for now
+    # iriscouch is not the fastest nor most reliable DB around
+    if not glob.glob('*.json'):
+        facs_vs_fastq_screen()
+
+    facs_vs_fastq_screen_files()
