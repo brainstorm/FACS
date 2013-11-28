@@ -39,10 +39,36 @@ def facs_vs_deconseq():
     for decon in deconseq:
         if decon.get('sample'):
             for fcs in facs:
-                if fcs.get('sample') == decon.get('sample'):
-                    print "Parse timing stuff here"
-                else:
-                    print "There are no samples to compare or they ran in different machines"
+                if fcs.get('sample'):
+                    if os.path.basename(fcs.get('sample')) == os.path.basename(decon.get('sample')):
+                        if fcs.get('begin_timestamp') and decon.get('start_timestamp'):
+                            begin_fcs = fcs['begin_timestamp']
+                            end_fcs = fcs['end_timestamp']
+
+                            begin_deco = decon['start_timestamp']
+                            end_deco = decon['end_timestamp']
+
+                            # remove the UTC offset (+0200) (%z does not parse it out)
+                            # http://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
+                            begin_fcs = begin_fcs[:-5]
+                            end_fcs = end_fcs[:-5]
+
+                            dt_b_fcs = datetime.datetime.strptime( begin_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
+                            dt_e_fcs = datetime.datetime.strptime( end_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
+
+                            delta_fcs = dt_e_fcs - dt_b_fcs
+
+
+                            # Remove the final 'Z' in timestamp
+                            begin_deco = begin_deco[:-1]
+                            end_deco = end_deco[:-1]
+
+                            dt_b_deco = datetime.datetime.strptime( begin_deco, "%Y-%m-%d %H:%M:%S.%f" )
+                            dt_e_deco = datetime.datetime.strptime( end_deco, "%Y-%m-%d %H:%M:%S.%f" )
+
+                            delta_deco = dt_e_deco - dt_b_deco
+
+                            print delta_deco.total_seconds(), delta_fcs.total_seconds()
 
 def facs_vs_fastq_screen():
     """ Work from the json files on disk instead of fetched from DB
