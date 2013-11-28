@@ -46,16 +46,17 @@ def facs_vs_fastq_screen_files():
                     if os.path.basename(fcs['sample']) == fqscr['sample']:
                         # Do not assume the test run went well
                         if len(fqscr['organisms']) > 0:
+                            if fqscr.get('begin_timestamp'):
                             # Fetch timing info for each program
-                            begin = fqscr['begin_timestamp']
-                            end = fqscr['end_timestamp']
+                                begin = fqscr['begin_timestamp']
+                                end = fqscr['end_timestamp']
 
-                            dt_b = datetime.datetime.strptime( begin, "%Y-%m-%d %H:%M:%S.%fZ" )
-                            dt_e = datetime.datetime.strptime( end, "%Y-%m-%d %H:%M:%S.%fZ" )
+                                dt_b = datetime.datetime.strptime( begin, "%Y-%m-%d %H:%M:%S.%fZ" )
+                                dt_e = datetime.datetime.strptime( end, "%Y-%m-%d %H:%M:%S.%fZ" )
 
-                            delta = datetime.datetime.timedelta(dt_e - dt_b)
+                                delta = dt_e - dt_b
 
-                            print delta
+                                print delta.total_seconds()
 
 
 
