@@ -2,6 +2,8 @@
 
 Given previous test results stored in an external database (specified in your
 ~/.facsrc file), downloads this results and plot them.
+
+XXX: Needs serious refactoring, way too much code repetition :/
 """
 import logbook
 import os
@@ -36,6 +38,9 @@ def facs_vs_deconseq():
     with open("deconseq.json") as fh:
         deconseq = json.load(fh)
 
+    # Print header for performance and accuracy results
+    print("runtime_deco\tcontam_deco\truntime_facs\tcontam_facs\tsample_deco\t\t\tsample_facs")
+
     for decon in deconseq:
         if decon.get('sample'):
             for fcs in facs:
@@ -56,6 +61,7 @@ def facs_vs_deconseq():
                             dt_b_fcs = datetime.datetime.strptime( begin_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
                             dt_e_fcs = datetime.datetime.strptime( end_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
 
+                            # How log did FACS run?
                             delta_fcs = dt_e_fcs - dt_b_fcs
 
 
@@ -66,9 +72,14 @@ def facs_vs_deconseq():
                             dt_b_deco = datetime.datetime.strptime( begin_deco, "%Y-%m-%d %H:%M:%S.%f" )
                             dt_e_deco = datetime.datetime.strptime( end_deco, "%Y-%m-%d %H:%M:%S.%f" )
 
+                            # How long did deconseq run?
                             delta_deco = dt_e_deco - dt_b_deco
 
-                            print delta_deco.total_seconds(), delta_fcs.total_seconds()
+                            # Fetch contamination rates for both
+                            contam_fcs = fcs.get('contamination_rate')
+                            contam_deco = decon.get('contamination_rate')
+
+                            print("{runtime_deco:.3f}\t\t{contam_deco}\t\t{runtime_facs:.3f}\t\t{contam_facs:.3f}\t\t{sample_deco:>30}\t\t{sample_facs:>30}".format(runtime_deco = delta_deco.total_seconds(), contam_deco=contam_deco, runtime_facs = delta_fcs.total_seconds(), contam_facs = contam_fcs, sample_deco=decon.get('sample'), sample_facs=fcs.get('sample')))
 
 def facs_vs_fastq_screen():
     """ Work from the json files on disk instead of fetched from DB
@@ -81,6 +92,9 @@ def facs_vs_fastq_screen():
     with open("fastq_screen.json") as fh:
         fastq_screen = json.load(fh)
 
+    # Print header for performance and accuracy results
+    print("runtime_fqscr\tcontam_fqscr\truntime_facs\tcontam_facs\tsample_fqscr\t\t\tsample_facs")
+
     for fqscr in fastq_screen:
         if fqscr.get('sample'):
             for fcs in facs:
@@ -92,7 +106,7 @@ def facs_vs_fastq_screen():
                     if os.path.basename(fcs['sample']) == fqscr['sample']:
                         # Do not assume the test run went well
                         if len(fqscr['organisms']) > 0:
-                            if fqscr.get('begin_timestamp'):
+                            if fqscr.get('begin_timestamp') and fcs.get('begin_timestamp'):
                             # Fetch timing info for each program
                                 begin = fqscr['begin_timestamp']
                                 end = fqscr['end_timestamp']
@@ -100,9 +114,9 @@ def facs_vs_fastq_screen():
                                 dt_b = datetime.datetime.strptime( begin, "%Y-%m-%d %H:%M:%S.%fZ" )
                                 dt_e = datetime.datetime.strptime( end, "%Y-%m-%d %H:%M:%S.%fZ" )
 
+                                # Fastqscreen runtime
                                 delta = dt_e - dt_b
 
-                            if fcs.get('begin_timestamp'):
                                 begin_fcs = fcs['begin_timestamp']
                                 end_fcs = fcs['end_timestamp']
 
@@ -114,9 +128,14 @@ def facs_vs_fastq_screen():
                                 dt_b_f = datetime.datetime.strptime( begin_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
                                 dt_e_f = datetime.datetime.strptime( end_fcs, "%Y-%m-%dT%H:%M:%S.%f" )
 
+                                # FACS runtime
                                 delta_fcs = dt_e_f - dt_b_f
 
-                                print delta.total_seconds(), delta_fcs.total_seconds()
+                                # Fetch contamination rates for both
+                                contam_fcs = fcs.get('contamination_rate')
+                                contam_fqscr = fqscr.get('contamination_rate')
+
+                                print("{runtime_fqscr:.3f}\t\t{contam_fqscr}\t\t{runtime_facs:.3f}\t\t{contam_facs:.3f}\t\t{sample_fqscr:>30}\t\t{sample_facs:>30}".format(runtime_fqscr = delta.total_seconds(), contam_fqscr = contam_fqscr, runtime_facs = delta_fcs.total_seconds(), contam_facs = contam_fcs, sample_fqscr=fqscr.get('sample'), sample_facs=fcs.get('sample')))
 
 
 
