@@ -220,8 +220,11 @@ char *query (char *query, char *bloom_filter, double tole_rate, double sampling_
   	gzclose(zip);
   	free (position);        //dont like file mapping, strings need to be freed in a normal way
   }
+
   /*
-  mode c and r refer to contamination checking and removal function respectively. The following 9 lines make sure that json/tsv output is printed after the checking process, but willnot be written in stdout when running removal process.
+  mode c and r refer to contamination checking and removal function respectively. 
+  The following 9 lines make sure that json/tsv output is printed after the checking 
+  process, but willnot be written in stdout when running removal process.
   */
   if (target_path!=NULL || mode == 'c')
   {
