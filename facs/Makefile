@@ -1,5 +1,9 @@
 # Common compiler flags for all OS
-CFLAGS=-O3 -Wall -g -DNODEBUG
+CFLAGS := -O3 -Wall -g -DNODEBUG
+PYTHON_INCLUDES := $(shell python-config --includes)
+INCLUDES := -I../include $(PYTHON_INCLUDES)
+SHARED := _facs.so
+
 
 # Detect OS
 UNAME := $(shell uname)
@@ -14,8 +18,9 @@ endif
 .PHONY: tests clean valgrind
 .SUFFIXES:.c .o
 PROG=facs
-LOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o  remove.o prob.o info.o
-AOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o  remove.o prob.o info.o
+LOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o remove.o prob.o info.o
+AOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o remove.o prob.o info.o
+COBJS= query.c bloom.c file_dir.c build.c lookup8.c suggestions.c tool.c remove.c prob.c info.c
 
 all:$(PROG)
 
@@ -53,3 +58,18 @@ lib${PROG}.a:$(LOBJS)
 
 main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h remove.h info.h
 
+facs_wrap.c: query.h facs.i
+	swig -builtin -python $(INCLUDES) -o rapi_wrap.c rapi.i
+
+facs_wrap.o:
+	$(CC) $(CFLAGS) $(INCLUDES) -c facs_wrap.c
+
+$(SHARED): facs facs_wrap.o
+	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
+
+swig: $(SHARED)
+
+#swig:
+#	swig -builtin -python facs.i
+#	$(CC) -c main.c facs_wrap.c query.c $(INCLUDES) -fPIC -I/usr/include/python2.7 -I.
+#	$(CC) -lpython main.o facs_wrap.o query.o -o facs.so
