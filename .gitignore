@@ -7,6 +7,8 @@
 *.fasta
 *.fastq
 *.info
+*.json
+
 core.*
 vgcore.*
 *.egg-info
@@ -15,3 +17,13 @@ tests/simNGS
 tests/simNGS.*
 build/
 dist/
+
+.cproject
+.idea/
+.project
+cov-int/
+facs
+facs.py
+facs_wrap.c
+cpanm
+fastq_screen_*

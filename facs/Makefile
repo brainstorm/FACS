@@ -20,7 +20,6 @@ endif
 PROG=facs
 LOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o remove.o prob.o info.o
 AOBJS= query.o bloom.o file_dir.o build.o lookup8.o suggestions.o tool.o remove.o prob.o info.o
-COBJS= query.c bloom.c file_dir.c build.c lookup8.c suggestions.c tool.c remove.c prob.c info.c
 
 all:$(PROG)
 
@@ -31,7 +30,7 @@ valgrind: python
 	valgrind --tool=memcheck --suppressions=../tests/utils/valgrind-python.supp nosetests -v -s ../tests/test_basic.py
 
 mpi:
-	@echo Make sure you have MPI support on your cluster hint: module load openmpi
+	@echo Make sure you have MPI support on your cluster
 	#mpicc -c *.c ${CFLAGS} ${LIBS}
 	#mpicc -c mpi_decon.c -O3 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILE 
 	#mpicc -o mpi_decon mpi_decon.o bloom.o suggestions.o lookup3.o  -lm ${CFLAGS}
@@ -42,7 +41,7 @@ python:
 	rm -rf build/ ${PROG}.so && python setup.py build_ext --inplace && python setup.py develop
 
 clean:
-	rm -f *.pyc core.* vgcore.* *.o *.so *.a *.info ${PROG}
+	rm -f *.pyc core.* vgcore.* *.o *.so *.a *.info *_wrap.* ${PROG}
 
 
 .c.o:
@@ -58,13 +57,13 @@ lib${PROG}.a:$(LOBJS)
 
 main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h remove.h info.h
 
-facs_wrap.c: query.h facs.i
-	swig -builtin -python $(INCLUDES) -o rapi_wrap.c rapi.i
+facs_wrap.c:
+	swig -builtin -python $(INCLUDES) -o facs_wrap.c facs.i
 
 facs_wrap.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c facs_wrap.c
 
-$(SHARED): facs facs_wrap.o
+$(SHARED): facs facs_wrap.c facs_wrap.o
 	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
 
 swig: $(SHARED)
