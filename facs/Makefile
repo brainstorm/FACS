@@ -61,10 +61,10 @@ facs_wrap.c:
 	swig -builtin -python $(INCLUDES) -o facs_wrap.c facs.i
 
 facs_wrap.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c facs_wrap.c
+	$(CC) $(CFLAGS) -fPIC $(INCLUDES) -c facs_wrap.c
 
 $(SHARED): facs facs_wrap.c facs_wrap.o
-	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
+	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lz
 
 swig: $(SHARED)
 
