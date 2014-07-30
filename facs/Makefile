@@ -64,11 +64,10 @@ facs_wrap.o:
 	$(CC) $(CFLAGS) -fPIC $(INCLUDES) -c facs_wrap.c
 
 $(SHARED): facs facs_wrap.c facs_wrap.o
+ifneq ($(UNAME), Darwin)
 	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lz
+else
+	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
+endif
 
 swig: $(SHARED)
-
-#swig:
-#	swig -builtin -python facs.i
-#	$(CC) -c main.c facs_wrap.c query.c $(INCLUDES) -fPIC -I/usr/include/python2.7 -I.
-#	$(CC) -lpython main.o facs_wrap.o query.o -o facs.so
