@@ -1,12 +1,11 @@
 # Common compiler flags for all OS
-CFLAGS := -O3 -Wall -g -DNODEBUG
+CFLAGS := -O3 -Wall -g -DNODEBUG -fPIC
 PYTHON_INCLUDES := $(shell python-config --includes)
-INCLUDES := -I../include $(PYTHON_INCLUDES)
+INCLUDES := -I $(PYTHON_INCLUDES)
 SHARED := _facs.so
-
-
-# Detect OS
 UNAME := $(shell uname)
+
+# Detect OS and apply CFLAGS
 ifneq ($(UNAME), Darwin)
 CFLAGS+=-fopenmp -D_FILE_OFFSET_BITS=64 -D_LARGE_FILE
 LIBS=-lm -lz
@@ -14,6 +13,14 @@ else
 CFLAGS+=-Wno-unknown-pragmas -Wno-unused-value -arch x86_64
 LIBS=-lz
 endif
+
+# Same for shared library flags
+ifeq ($(UNAME), Darwin)
+    SHLIB_FLAGS = -shared -undefined dynamic_lookup
+else
+    SHLIB_FLAGS = -pthread -shared -Wl,-O1
+endif
+
 
 .PHONY: tests clean valgrind
 .SUFFIXES:.c .o
@@ -45,7 +52,7 @@ clean:
 
 
 .c.o:
-		$(CC) -c $(DFLAGS) $(INCLUDES) $< -o $@ $(CFLAGS) 
+	$(CC) -c $(DFLAGS) $(INCLUDES) $< -o $@ $(CFLAGS) 
 
 ${PROG}:lib${PROG}.a $(AOBJS)
 
@@ -58,16 +65,16 @@ lib${PROG}.a:$(LOBJS)
 main.o: query.h bloom.h build.h file_dir.h hashes.h tool.h remove.h info.h
 
 facs_wrap.c:
-	swig -builtin -python $(INCLUDES) -o facs_wrap.c facs.i
+	swig -Wall -python -builtin -fcompact -fvirtual -module $(PROG) -o facs_wrap.c facs.i
 
 facs_wrap.o:
-	$(CC) $(CFLAGS) -fPIC $(INCLUDES) -c facs_wrap.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c facs_wrap.c
 
 $(SHARED): facs facs_wrap.c facs_wrap.o
 ifneq ($(UNAME), Darwin)
-	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lz
+	$(CC) $(SHLIB_FLAGS) $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lz -lpython
 else
-	$(CC) -shared $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
+	$(CC) $(SHLIB_FLAGS) $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
 endif
 
-swig: $(SHARED)
+swig: $(SHARED) 
