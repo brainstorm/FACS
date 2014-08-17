@@ -71,10 +71,10 @@ facs_wrap.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c facs_wrap.c
 
 $(SHARED): facs facs_wrap.c facs_wrap.o
-ifneq ($(UNAME), Darwin)
-	$(CC) $(SHLIB_FLAGS) $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lz -lpython
-else
+ifeq ($(UNAME), Darwin)
 	$(CC) $(SHLIB_FLAGS) $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lpython -lz
+else
+	$(CC) $(SHLIB_FLAGS) $(CFLAGS) -o $@ facs_wrap.o -L$(dir ${PROG}.a) -lfacs -lz
 endif
 
 swig: $(SHARED) 
